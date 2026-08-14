@@ -20,7 +20,8 @@ model User {
   meals        Meal[]
   workouts     Workout[]
   weightLogs   WeightEntry[]
-}
+  dailyMetrics DailyMetric[]
+} 
 
 model Meal {
   id          String   @id @default(uuid())
@@ -56,3 +57,14 @@ model WeightEntry {
   weight    Float
   date      DateTime @default(now())
 }
+model DailyMetric {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime @default(now())
+  steps     Int      @default(0)
+  sleepHours Float   @default(0)
+
+  @@unique([userId, date])
+}
+
