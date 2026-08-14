@@ -1,0 +1,912 @@
+/* =========================================================
+   GLOBAL RESET & BASE
+========================================================= */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background: #0b0f0d;
+  color: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button {
+  font-family: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none !important;
+}
+
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+
+/* =========================================================
+   SIDEBAR (Underline & Active Ring Fixes Included)
+========================================================= */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 240px;
+  height: 100vh;
+  padding: 30px 20px;
+  background: #111713;
+  border-right: 1px solid #252d28;
+  z-index: 100;
+}
+
+.sidebar h2 {
+  margin-bottom: 40px;
+  color: #ffffff;
+  font-size: 26px;
+}
+
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar nav button,
+.sidebar nav a {
+  width: 100%;
+  padding: 12px 15px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: #9da69f;
+  font-size: 16px;
+  text-align: left;
+  text-decoration: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.sidebar nav button:hover,
+.sidebar nav a:hover {
+  background: #1b231e;
+  color: #ffffff;
+  text-decoration: none !important;
+}
+
+.sidebar nav button.active,
+.sidebar nav a.active {
+  background: #1b231e;
+  border: 1px solid #3a463d !important;
+  color: #ffffff;
+  text-decoration: none !important;
+}
+
+
+/* =========================================================
+   MAIN CONTENT CONTAINER
+========================================================= */
+
+.main-content {
+  width: calc(100% - 240px);
+  min-height: 100vh;
+  margin-left: 240px;
+  padding: 40px;
+}
+
+
+/* =========================================================
+   DASHBOARD WRAPPER & HEADER
+========================================================= */
+
+.dashboard {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.dashboard-header h1 {
+  margin-bottom: 6px;
+  color: #ffffff;
+  font-size: 38px;
+  font-weight: 700;
+}
+
+.dashboard-header p {
+  color: #8a938d;
+  font-size: 15px;
+}
+
+
+/* =========================================================
+   FITNESS SCORE RING CARD
+========================================================= */
+
+.fitness-score {
+  width: 100%;
+  margin-bottom: 24px;
+  padding: 30px 20px;
+  background: #141a16;
+  border: 1px solid #252d28;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.fitness-score-header {
+  margin-bottom: 16px;
+}
+
+.fitness-score-header h2 {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.fitness-score-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.score-ring {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.score-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.score-ring circle {
+  fill: none;
+  stroke-width: 10;
+}
+
+.score-ring circle.bg {
+  stroke: #1f2722;
+}
+
+.score-ring circle.progress {
+  stroke: #4ade80;
+  stroke-linecap: round;
+  stroke-dasharray: 377;
+  stroke-dashoffset: 52;
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.score-number {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.score-number strong {
+  color: #ffffff;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.score-number span {
+  margin-top: 4px;
+  color: #6f7772;
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   STAT GRID & CARDS
+========================================================= */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.stat-card {
+  width: 100%;
+  min-height: 130px;
+  padding: 22px 20px;
+  background: #141a16;
+  border: 1px solid #252d28;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: #3a463d;
+}
+
+.stat-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  color: #9da69f;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.stat-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.stat-value {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+}
+
+.stat-value strong {
+  color: #ffffff;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.stat-value span {
+  color: #5d6660;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+
+/* =========================================================
+   WEEKLY ACTIVITY CHART
+========================================================= */
+
+.weekly-chart {
+  width: 100%;
+  margin-top: 24px;
+  padding: 25px 30px;
+  background: #141a16;
+  border: 1px solid #252d28;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.weekly-chart-header {
+  margin-bottom: 25px;
+}
+
+.weekly-chart-header h2 {
+  margin-bottom: 6px;
+  color: #ffffff;
+  font-size: 24px;
+}
+
+.weekly-chart-header p {
+  color: #9da69f;
+  font-size: 15px;
+}
+
+.chart-area {
+  display: flex;
+  width: 100%;
+  height: 300px;
+}
+
+.chart-y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 45px;
+  height: 250px;
+  padding-bottom: 5px;
+  color: #6f7772;
+  font-size: 12px;
+}
+
+.chart-content {
+  position: relative;
+  flex: 1;
+  height: 250px;
+  min-width: 0;
+}
+
+.chart-grid {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.chart-grid div {
+  width: 100%;
+  border-top: 1px solid #252d28;
+}
+
+.bars {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 250px;
+  padding: 0 10px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bar-column {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.activity-bar {
+  width: 42px;
+  max-width: 70%;
+  min-height: 5px;
+  background: #4ade80;
+  border-radius: 7px 7px 3px 3px;
+  transition: height 0.3s ease, opacity 0.2s ease;
+}
+
+.activity-bar:hover {
+  opacity: 0.8;
+}
+
+.bar-column span {
+  position: absolute;
+  bottom: -30px;
+  color: #8a938d;
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   NUTRITION PAGE STYLES
+========================================================= */
+
+.nutrition-page {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.page-header {
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.page-header h1 {
+  margin-bottom: 6px;
+  color: #ffffff;
+  font-size: 38px;
+  font-weight: 700;
+}
+
+.page-header p {
+  color: #8a938d;
+  font-size: 15px;
+}
+
+.nutrition-card {
+  width: 100%;
+  padding: 24px 28px;
+  background: #141a16;
+  border: 1px solid #252d28;
+  border-radius: 20px;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.card-title .icon {
+  font-size: 22px;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  margin-top: 14px;
+  background: #1f2722;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: #4ade80;
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+.daily-calories-card .calories-value {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.daily-calories-card .calories-value strong {
+  color: #ffffff;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.daily-calories-card .calories-value span {
+  color: #6f7772;
+  font-size: 16px;
+}
+
+.daily-calories-card .remaining-text {
+  margin-top: 10px;
+  color: #8a938d;
+  font-size: 14px;
+}
+
+.macros-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.macro-card .card-title {
+  font-size: 18px;
+}
+
+.macro-value {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.macro-value strong {
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.macro-value span {
+  color: #5d6660;
+  font-size: 14px;
+}
+
+.meals-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.meals-header h2 {
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.add-meal-btn {
+  padding: 8px 16px;
+  background: #1f2722;
+  border: 1px solid #2f3a33;
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.add-meal-btn:hover {
+  background: #28332c;
+}
+
+.meals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.meal-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #1f2722;
+}
+
+.meal-item:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.meal-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.meal-icon {
+  font-size: 24px;
+}
+
+.meal-info h3 {
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.meal-info p {
+  margin-top: 2px;
+  color: #8a938d;
+  font-size: 14px;
+}
+
+.meal-calories {
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.ai-insight-card {
+  text-align: center;
+}
+
+.ai-insight-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ai-insight-header h2 {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.ai-insight-card p {
+  color: #8a938d;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 768px) {
+  .main-content {
+    width: 100%;
+    margin-left: 0;
+    padding: 20px;
+    padding-bottom: 80px;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    min-height: 60px;
+    padding: 10px 20px;
+    border-right: none;
+    border-top: 1px solid #252d28;
+  }
+
+  .sidebar h2 {
+    display: none;
+  }
+
+  .sidebar nav {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    gap: 0;
+  }
+
+  .sidebar nav button,
+  .sidebar nav a {
+    width: auto;
+    padding: 8px 10px;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .stats-grid,
+  .macros-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+/* =========================================================
+   COMMON PAGE LAYOUTS & CARDS FOR WORKOUT/ACTIVITY/PROGRESS/SETTINGS
+========================================================= */
+
+.page-container {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.section-card {
+  width: 100%;
+  padding: 24px 28px;
+  background: #141a16;
+  border: 1px solid #252d28;
+  border-radius: 20px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.action-btn {
+  padding: 8px 16px;
+  background: #1f2722;
+  border: 1px solid #2f3a33;
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.action-btn:hover {
+  background: #28332c;
+}
+
+.subtext {
+  margin-top: 8px;
+  color: #8a938d;
+  font-size: 14px;
+}
+
+/* WORKOUT PAGE */
+.workout-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.workout-card {
+  padding: 18px 20px;
+  background: #101512;
+  border: 1px solid #1f2722;
+  border-radius: 14px;
+}
+
+.workout-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.workout-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workout-title h3 {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.workout-date {
+  color: #8a938d;
+  font-size: 13px;
+}
+
+.sets-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.set-badge {
+  padding: 6px 12px;
+  background: #1a221d;
+  border: 1px solid #28332c;
+  border-radius: 8px;
+  color: #4ade80;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ACTIVITY PAGE */
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.activity-card {
+  padding: 18px 20px;
+  background: #101512;
+  border: 1px solid #1f2722;
+  border-radius: 14px;
+}
+
+.activity-value {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.activity-value strong {
+  color: #ffffff;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.activity-value .target {
+  color: #5d6660;
+  font-size: 14px;
+}
+
+/* PROGRESS PAGE */
+.weight-display {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.weight-display strong {
+  color: #ffffff;
+  font-size: 34px;
+  font-weight: 700;
+}
+
+.weight-display .target {
+  color: #6f7772;
+  font-size: 16px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #101512;
+  border: 1px solid #1f2722;
+  border-radius: 12px;
+}
+
+.history-date {
+  color: #8a938d;
+  font-size: 14px;
+}
+
+.history-weight {
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* SETTINGS PAGE */
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: #101512;
+  border: 1px solid #1f2722;
+  border-radius: 12px;
+}
+
+.settings-item .label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #9da69f;
+  font-size: 15px;
+}
+
+.settings-item .value {
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.settings-item .badge {
+  padding: 4px 10px;
+  background: #1b261e;
+  border: 1px solid #2b3a2f;
+  border-radius: 6px;
+  color: #4ade80;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .activity-grid {
+    grid-template-columns: 1fr;
+  }
+}

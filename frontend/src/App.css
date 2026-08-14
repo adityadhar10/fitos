@@ -1,0 +1,679 @@
+/* =========================
+
+GLOBAL
+
+========================= */
+
+
+
+* {
+
+box-sizing: border-box;
+
+margin: 0;
+
+padding: 0;
+
+}
+
+
+
+body {
+
+background: #0b0f0d;
+
+color: white;
+
+font-family: Arial, sans-serif;
+
+}
+
+
+
+.app {
+
+display: flex;
+
+min-height: 100vh;
+
+}
+
+
+
+
+
+/* =========================
+
+SIDEBAR
+
+========================= */
+
+
+
+.sidebar {
+
+width: 240px;
+
+min-height: 100vh;
+
+background: #111713;
+
+border-right: 1px solid #252d28;
+
+padding: 30px 20px;
+
+position: fixed;
+
+left: 0;
+
+top: 0;
+
+}
+
+
+
+.sidebar h2 {
+
+font-size: 26px;
+
+margin-bottom: 40px;
+
+}
+
+
+
+.sidebar nav {
+
+display: flex;
+
+flex-direction: column;
+
+gap: 10px;
+
+}
+
+
+
+.sidebar a {
+
+display: block;
+
+padding: 12px 15px;
+
+color: #9da69f;
+
+text-decoration: none;
+
+border-radius: 10px;
+
+cursor: pointer;
+
+}
+
+
+
+.sidebar a:hover {
+
+background: #1b231e;
+
+color: white;
+
+}
+
+
+
+
+
+/* =========================
+
+MAIN CONTENT
+
+========================= */
+
+
+
+.main-content {
+
+margin-left: 240px;
+
+width: calc(100% - 240px);
+
+padding: 32px;
+
+}
+
+
+
+.dashboard {
+
+max-width: 1100px;
+
+margin: 0 auto;
+
+}
+
+
+
+
+
+/* =========================
+
+HEADER
+
+========================= */
+
+
+
+.dashboard-header {
+
+margin-bottom: 32px;
+
+text-align: center;
+
+}
+
+
+
+.dashboard-header h1 {
+
+font-size: 36px;
+
+margin-bottom: 8px;
+
+color: #ffffff;
+
+}
+
+
+
+.dashboard-header p {
+
+color: #a3aca6;
+
+font-size: 16px;
+
+}
+
+
+
+
+
+/* =========================
+
+FITNESS SCORE (circular progress ring)
+
+========================= */
+
+
+
+.fitness-score {
+
+background: #141a16;
+
+border: 1px solid #252d28;
+
+border-radius: 20px;
+
+padding: 24px;
+
+margin-bottom: 24px;
+
+text-align: center;
+
+display: flex;
+
+flex-direction: column;
+
+align-items: center;
+
+justify-content: center;
+
+gap: 10px;
+
+}
+
+
+
+.fitness-score > span {
+
+color: #9da69f;
+
+font-size: 18px;
+
+}
+
+
+
+.circular-progress {
+
+position: relative;
+
+width: 180px;
+
+height: 180px;
+
+}
+
+
+
+.circular-progress-text {
+
+position: absolute;
+
+top: 50%;
+
+left: 50%;
+
+transform: translate(-50%, -50%);
+
+text-align: center;
+
+}
+
+
+
+.circular-progress-text h2 {
+
+font-size: 42px;
+
+color: #ffffff;
+
+margin: 0;
+
+}
+
+
+
+.circular-progress-text small {
+
+color: #8a938d;
+
+font-size: 14px;
+
+}
+
+
+
+
+
+/* =========================
+
+STATS GRID
+
+========================= */
+
+
+
+.stats-grid {
+
+display: grid;
+
+grid-template-columns: repeat(2, 1fr);
+
+gap: 16px;
+
+}
+
+
+
+
+
+/* =========================
+
+STAT CARD
+
+========================= */
+
+
+
+.stat-card {
+
+background: #141a16;
+
+border: 1px solid #252d28;
+
+border-radius: 20px;
+
+padding: 24px;
+
+min-height: 130px;
+
+display: flex;
+
+flex-direction: column;
+
+justify-content: center;
+
+transition:
+
+transform 0.2s ease,
+
+border-color 0.2s ease;
+
+}
+
+
+
+.stat-card:hover {
+
+transform: translateY(-3px);
+
+border-color: #3a463d;
+
+}
+
+
+
+.stat-title {
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+gap: 8px;
+
+color: #9da69f;
+
+font-size: 17px;
+
+margin-bottom: 12px;
+
+}
+
+
+
+.stat-icon {
+
+font-size: 20px;
+
+}
+
+
+
+.stat-value {
+
+display: flex;
+
+align-items: baseline;
+
+justify-content: center;
+
+gap: 8px;
+
+}
+
+
+
+.stat-value strong {
+
+color: #ffffff;
+
+font-size: 30px;
+
+}
+
+
+
+.stat-value span {
+
+color: #6f7772;
+
+font-size: 15px;
+
+}
+
+
+
+
+
+/* =========================
+
+BOTTOM ROW (chart + insight)
+
+========================= */
+
+
+
+.bottom-row {
+
+display: grid;
+
+grid-template-columns: 1.6fr 1fr;
+
+gap: 16px;
+
+margin-top: 24px;
+
+align-items: start;
+
+}
+
+
+
+.bottom-row .weekly-chart,
+
+.bottom-row .ai-insight {
+
+margin-top: 0;
+
+}
+
+
+
+
+
+/* =========================
+
+WEEKLY CHART
+
+========================= */
+
+
+
+.weekly-chart {
+
+margin-top: 24px;
+
+background: #141a16;
+
+border: 1px solid #252d28;
+
+border-radius: 20px;
+
+padding: 24px;
+
+}
+
+
+
+.weekly-chart h2 {
+
+color: #ffffff;
+
+margin-bottom: 4px;
+
+font-size: 20px;
+
+}
+
+
+
+.chart-subtitle {
+
+color: #9da69f;
+
+font-size: 14px;
+
+margin-bottom: 20px;
+
+}
+
+
+
+
+
+/* =========================
+
+AI INSIGHT
+
+========================= */
+
+
+
+.ai-insight {
+
+margin-top: 24px;
+
+background: #141a16;
+
+border: 1px solid #252d28;
+
+border-radius: 20px;
+
+padding: 24px;
+
+text-align: center;
+
+}
+
+
+
+.ai-insight h2 {
+
+margin-bottom: 10px;
+
+color: #ffffff;
+
+}
+
+
+
+.ai-insight p {
+
+color: #9da69f;
+
+line-height: 1.6;
+
+}
+
+
+
+
+
+/* =========================
+
+MOBILE
+
+========================= */
+
+
+
+@media (max-width: 768px) {
+
+
+
+.main-content {
+
+margin-left: 0;
+
+width: 100%;
+
+padding: 20px;
+
+}
+
+
+
+.stats-grid {
+
+grid-template-columns: 1fr;
+
+}
+
+
+
+.bottom-row {
+
+grid-template-columns: 1fr;
+
+}
+
+
+
+.circular-progress {
+
+width: 140px;
+
+height: 140px;
+
+}
+
+
+
+.circular-progress svg {
+
+width: 140px;
+
+height: 140px;
+
+}
+
+
+
+.sidebar {
+
+position: fixed;
+
+bottom: 0;
+
+top: auto;
+
+left: 0;
+
+width: 100%;
+
+height: 60px;
+
+padding: 10px 20px;
+
+border-right: none;
+
+border-top: 1px solid #252d28;
+
+z-index: 10;
+
+}
+
+
+
+.sidebar h2 {
+
+display: none;
+
+}
+
+
+
+.sidebar nav {
+
+flex-direction: row;
+
+justify-content: space-around;
+
+gap: 0;
+
+}
+
+
+
+.sidebar a {
+
+padding: 8px 10px;
+
+font-size: 13px;
+
+}
+
+}
