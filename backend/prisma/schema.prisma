@@ -30,9 +30,11 @@ model Meal {
   type        String
   description String
   calories    Int
+  protein     Int      @default(0)
+  carbs       Int      @default(0)
+  fats        Int      @default(0)
   createdAt   DateTime @default(now())
 }
-
 model Workout {
   id        String   @id @default(uuid())
   userId    String

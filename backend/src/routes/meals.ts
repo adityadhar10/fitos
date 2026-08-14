@@ -23,7 +23,7 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
 
 router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const { type, description, calories } = req.body;
+const { type, description, calories, protein, carbs, fats } = req.body;
 
     if (!type || !description || calories === undefined) {
       return res.status(400).json({ error: 'Type, description, and calories are required.' });
@@ -35,9 +35,11 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
         type,
         description,
         calories: Number(calories),
+        protein: protein !== undefined ? Number(protein) : 0,
+        carbs: carbs !== undefined ? Number(carbs) : 0,
+        fats: fats !== undefined ? Number(fats) : 0,
       },
     });
-
     res.status(201).json({ meal });
   } catch (error) {
     console.error('Create meal error:', error);
