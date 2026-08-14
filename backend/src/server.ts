@@ -6,6 +6,7 @@ import mealRoutes from './routes/meals.js';
 import workoutRoutes from './routes/workouts.js';
 import weightRoutes from './routes/weight.js';
 import metricsRoutes from './routes/metrics.js';
+import insightsRoutes from './routes/insights.js';
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use('/api/meals', mealRoutes);
 app.use('/api/workouts', workoutRoutes);
 app.use('/api/weight', weightRoutes);
 app.use('/api/metrics', metricsRoutes);
+app.use('/api/insights', insightsRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
