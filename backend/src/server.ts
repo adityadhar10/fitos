@@ -2,6 +2,9 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
+import mealRoutes from './routes/meals.js';
+import workoutRoutes from './routes/workouts.js';
+import weightRoutes from './routes/weight.js';
 
 dotenv.config();
 
@@ -16,6 +19,9 @@ app.get('/api/health', (req: Request, res: Response) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/meals', mealRoutes);
+app.use('/api/workouts', workoutRoutes);
+app.use('/api/weight', weightRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
