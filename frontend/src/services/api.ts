@@ -26,9 +26,14 @@ export const getMe = () => api.get("/auth/me");
 
 // ---- Meals ----
 export const getMeals = () => api.get("/meals");
-export const addMeal = (type: string, description: string, calories: number) =>
-  api.post("/meals", { type, description, calories });
-
+export const addMeal = (
+  type: string,
+  description: string,
+  calories: number,
+  protein?: number,
+  carbs?: number,
+  fats?: number
+) => api.post("/meals", { type, description, calories, protein, carbs, fats });
 // ---- Workouts ----
 export const getWorkouts = () => api.get("/workouts");
 export const addWorkout = (name: string, sets: { reps: number; weight: number }[]) =>
