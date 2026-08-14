@@ -1,7 +1,0 @@
-
-> backend@1.0.0 dev
-> tsx watch src/server.ts
-
-◇ injected env (4) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
-◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
-🚀 Server running on http://localhost:5001
