@@ -21,7 +21,19 @@ model User {
   workouts     Workout[]
   weightLogs   WeightEntry[]
   dailyMetrics DailyMetric[]
+  badges       UserBadge[]
 } 
+
+model UserBadge {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId   String   // e.g. "first_workout", "7_day_streak"
+  earnedAt  DateTime @default(now())
+
+  @@unique([userId, badgeId])
+}
+
 
 model Meal {
   id          String   @id @default(uuid())
@@ -36,12 +48,13 @@ model Meal {
   createdAt   DateTime @default(now())
 }
 model Workout {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name      String
-  date      DateTime @default(now())
-  sets      Set[]
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  muscleGroup String?
+  date        DateTime @default(now())
+  sets        Set[]
 }
 
 model Set {

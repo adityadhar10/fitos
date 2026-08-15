@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { BrowserRouter, Routes, Route, NavLink, Navigate } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuth } from "./context/AuthContext";
 
 import Dashboard from "./pages/Dashboard";
@@ -6,58 +7,54 @@ import Nutrition from "./pages/Nutrition";
 import Workout from "./pages/Workout";
 import Activity from "./pages/Activity";
 import Progress from "./pages/Progress";
+import Badges from "./pages/Badges";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60, // 1 minute
+      retry: 1,
+    },
+  },
+});
+
 const NAV_ITEMS = [
-  { id: "dashboard", label: "Dashboard", icon: "📊" },
-  { id: "nutrition", label: "Nutrition", icon: "🥗" },
-  { id: "workout", label: "Workout", icon: "🏋️" },
-  { id: "activity", label: "Activity", icon: "⚡" },
-  { id: "progress", label: "Progress", icon: "📈" },
-  { id: "settings", label: "Settings", icon: "⚙️" },
+  { to: "/dashboard", label: "Dashboard", icon: "📊" },
+  { to: "/nutrition", label: "Nutrition", icon: "🥗" },
+  { to: "/workout", label: "Workout", icon: "🏋️" },
+  { to: "/activity", label: "Activity", icon: "⚡" },
+  { to: "/progress", label: "Progress", icon: "📈" },
+  { to: "/badges", label: "Badges", icon: "🏅" },
+  { to: "/settings", label: "Settings", icon: "⚙️" },
 ];
 
-function App() {
+function AppShell() {
   const { user, loading, logout } = useAuth();
-  const [page, setPage] = useState("dashboard");
-  const [authPage, setAuthPage] = useState<"login" | "signup">("login");
-
-  const changePage = (newPage: string) => {
-    setPage(newPage);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
 
   if (loading) {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          color: "#7a8580",
-          fontFamily: "'Inter', sans-serif",
-          fontSize: 15,
-          gap: 10,
-        }}
-      >
-        <span style={{ fontSize: 24 }}>⚡</span> Loading FitOS...
+      <div className="loading-screen">
+        <span className="loading-icon">⚡</span>
+        Loading FitOS...
       </div>
     );
   }
 
   if (!user) {
-    return authPage === "login" ? (
-      <Login onSwitchToSignup={() => setAuthPage("signup")} />
-    ) : (
-      <Signup onSwitchToLogin={() => setAuthPage("login")} />
+    return (
+      <Routes>
+        <Route path="/signup" element={<Signup onSwitchToLogin={() => {}} />} />
+        <Route path="*" element={<Login onSwitchToSignup={() => {}} />} />
+      </Routes>
     );
   }
 
   return (
     <div className="app">
+      {/* ── Sidebar (desktop) / Bottom nav (mobile) ── */}
       <aside className="sidebar">
         <div className="sidebar-logo">
           <h2>FitOS</h2>
@@ -65,14 +62,14 @@ function App() {
 
         <nav>
           {NAV_ITEMS.map((item) => (
-            <button
-              key={item.id}
-              className={page === item.id ? "active" : ""}
-              onClick={() => changePage(item.id)}
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) => (isActive ? "active" : "")}
             >
               <span className="nav-icon">{item.icon}</span>
               <span className="nav-label">{item.label}</span>
-            </button>
+            </NavLink>
           ))}
         </nav>
 
@@ -84,15 +81,45 @@ function App() {
         </div>
       </aside>
 
+      {/* ── Bottom navigation bar (mobile only) ── */}
+      <nav className="bottom-nav">
+        {NAV_ITEMS.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            className={({ isActive }) => `bottom-nav-item${isActive ? " active" : ""}`}
+          >
+            <span className="bottom-nav-icon">{item.icon}</span>
+            <span className="bottom-nav-label">{item.label}</span>
+          </NavLink>
+        ))}
+      </nav>
+
+      {/* ── Main content ── */}
       <main className="main-content">
-        {page === "dashboard" && <Dashboard />}
-        {page === "nutrition" && <Nutrition />}
-        {page === "workout" && <Workout />}
-        {page === "activity" && <Activity />}
-        {page === "progress" && <Progress />}
-        {page === "settings" && <Settings />}
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/nutrition" element={<Nutrition />} />
+          <Route path="/workout" element={<Workout />} />
+          <Route path="/activity" element={<Activity />} />
+          <Route path="/progress" element={<Progress />} />
+          <Route path="/badges" element={<Badges />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AppShell />
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 

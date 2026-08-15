@@ -1,9 +1,24 @@
 import { Router, Response } from 'express';
+import { z } from 'zod';
 import prisma from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
 
 const router = Router();
 
+// ── Zod schemas ──────────────────────────────────────────────────────────────
+const addMealSchema = z.object({
+  type: z.enum(['breakfast', 'lunch', 'dinner', 'snack'] as const, {
+    error: () => 'Type must be breakfast, lunch, dinner, or snack.',
+  }),
+  description: z.string().min(1, 'Description is required').max(200),
+  calories: z.coerce.number().int().nonnegative('Calories must be 0 or more'),
+  protein: z.coerce.number().int().nonnegative().optional().default(0),
+  carbs: z.coerce.number().int().nonnegative().optional().default(0),
+  fats: z.coerce.number().int().nonnegative().optional().default(0),
+});
+
+// ── GET /api/meals ───────────────────────────────────────────────────────────
 router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const startOfDay = new Date();
@@ -21,24 +36,13 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
+// ── POST /api/meals ──────────────────────────────────────────────────────────
+router.post('/', requireAuth, validate(addMealSchema), async (req: AuthRequest, res: Response) => {
   try {
-const { type, description, calories, protein, carbs, fats } = req.body;
-
-    if (!type || !description || calories === undefined) {
-      return res.status(400).json({ error: 'Type, description, and calories are required.' });
-    }
+    const { type, description, calories, protein, carbs, fats } = req.body;
 
     const meal = await prisma.meal.create({
-      data: {
-        userId: req.userId!,
-        type,
-        description,
-        calories: Number(calories),
-        protein: protein !== undefined ? Number(protein) : 0,
-        carbs: carbs !== undefined ? Number(carbs) : 0,
-        fats: fats !== undefined ? Number(fats) : 0,
-      },
+      data: { userId: req.userId!, type, description, calories, protein, carbs, fats },
     });
     res.status(201).json({ meal });
   } catch (error) {
@@ -46,9 +50,11 @@ const { type, description, calories, protein, carbs, fats } = req.body;
     res.status(500).json({ error: 'Failed to create meal.' });
   }
 });
-    router.delete('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
+
+// ── DELETE /api/meals/:id ────────────────────────────────────────────────────
+router.delete('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const mealId = String(req.params.id);
+    const mealId = req.params.id as string;
     const meal = await prisma.meal.findUnique({ where: { id: mealId } });
 
     if (!meal || meal.userId !== req.userId) {

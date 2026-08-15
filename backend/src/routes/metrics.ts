@@ -1,10 +1,20 @@
 import { Router, Response } from 'express';
+import { z } from 'zod';
 import prisma from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
 
 const router = Router();
 
-// GET /api/metrics/today — get or return default today's steps/sleep
+// ── Zod schemas ──────────────────────────────────────────────────────────────
+const updateMetricsSchema = z.object({
+  steps: z.coerce.number().int().nonnegative().optional(),
+  sleepHours: z.coerce.number().min(0).max(24, 'Sleep hours cannot exceed 24').optional(),
+}).refine((data) => data.steps !== undefined || data.sleepHours !== undefined, {
+  message: 'At least one of steps or sleepHours must be provided.',
+});
+
+// ── GET /api/metrics/today ───────────────────────────────────────────────────
 router.get('/today', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const startOfDay = new Date();
@@ -21,8 +31,8 @@ router.get('/today', requireAuth, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// POST /api/metrics/today — upsert today's steps/sleep
-router.post('/today', requireAuth, async (req: AuthRequest, res: Response) => {
+// ── POST /api/metrics/today ──────────────────────────────────────────────────
+router.post('/today', requireAuth, validate(updateMetricsSchema), async (req: AuthRequest, res: Response) => {
   try {
     const { steps, sleepHours } = req.body;
 
@@ -38,16 +48,16 @@ router.post('/today', requireAuth, async (req: AuthRequest, res: Response) => {
       metric = await prisma.dailyMetric.update({
         where: { id: existing.id },
         data: {
-          steps: steps !== undefined ? Number(steps) : existing.steps,
-          sleepHours: sleepHours !== undefined ? Number(sleepHours) : existing.sleepHours,
+          steps: steps !== undefined ? steps : existing.steps,
+          sleepHours: sleepHours !== undefined ? sleepHours : existing.sleepHours,
         },
       });
     } else {
       metric = await prisma.dailyMetric.create({
         data: {
           userId: req.userId!,
-          steps: steps !== undefined ? Number(steps) : 0,
-          sleepHours: sleepHours !== undefined ? Number(sleepHours) : 0,
+          steps: steps ?? 0,
+          sleepHours: sleepHours ?? 0,
         },
       });
     }
@@ -59,7 +69,7 @@ router.post('/today', requireAuth, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// GET /api/metrics/weekly — last 7 days of steps
+// ── GET /api/metrics/weekly ──────────────────────────────────────────────────
 router.get('/weekly', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const sevenDaysAgo = new Date();
@@ -78,10 +88,9 @@ router.get('/weekly', requireAuth, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// GET /api/metrics/streak — consecutive days with any activity (steps > 0 OR meals logged)
+// ── GET /api/metrics/streak ──────────────────────────────────────────────────
 router.get('/streak', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    // Get last 60 days of metrics where steps > 0
     const sixtyDaysAgo = new Date();
     sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
     sixtyDaysAgo.setHours(0, 0, 0, 0);
@@ -99,16 +108,10 @@ router.get('/streak', requireAuth, async (req: AuthRequest, res: Response) => {
       }),
     ]);
 
-    // Collect unique active days (date strings YYYY-MM-DD)
     const activeDays = new Set<string>();
-    for (const m of metrics) {
-      activeDays.add(new Date(m.date).toDateString());
-    }
-    for (const m of meals) {
-      activeDays.add(new Date(m.createdAt).toDateString());
-    }
+    for (const m of metrics) activeDays.add(new Date(m.date).toDateString());
+    for (const m of meals) activeDays.add(new Date(m.createdAt).toDateString());
 
-    // Count consecutive days back from today
     let streak = 0;
     const today = new Date();
     for (let i = 0; i < 60; i++) {
@@ -129,4 +132,3 @@ router.get('/streak', requireAuth, async (req: AuthRequest, res: Response) => {
 });
 
 export default router;
-

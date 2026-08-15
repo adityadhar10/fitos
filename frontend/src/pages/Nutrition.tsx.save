@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import "../index.css";
-import { getMeals, addMeal, getInsight } from "../services/api";
 import { useAuth } from "../context/AuthContext";
-import FoodSearch from "../components/FoodSearch";
-import FoodPhotoScan from "../components/FoodPhotoScan";
 
 interface Meal {
   id: string;
@@ -32,11 +29,7 @@ export default function Nutrition() {
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [scanMode, setScanMode] = useState(false);
   const [saving, setSaving] = useState(false);
-
-  const [aiInsight, setAiInsight] = useState<string | null>(null);
-  const [insightLoading, setInsightLoading] = useState(true);
 
   const [type, setType] = useState("Breakfast");
   const [description, setDescription] = useState("");
@@ -53,17 +46,8 @@ export default function Nutrition() {
       .finally(() => setLoading(false));
   };
 
-  const loadInsight = () => {
-    setInsightLoading(true);
-    getInsight()
-      .then((res) => setAiInsight(res.data.insight))
-      .catch((err) => console.error("Failed to load AI insight:", err))
-      .finally(() => setInsightLoading(false));
-  };
-
   useEffect(() => {
     loadMeals();
-    loadInsight();
   }, []);
 
   const totalCalories = meals.reduce((sum, m) => sum + m.calories, 0);
@@ -85,7 +69,7 @@ export default function Nutrition() {
 
     setSaving(true);
     try {
-      await addMeal(
+       await addMeal(
         type,
         description,
         Number(calories),
@@ -100,7 +84,6 @@ export default function Nutrition() {
       setFats("");
       setShowForm(false);
       loadMeals();
-      loadInsight();
     } catch (err) {
       console.error("Failed to add meal:", err);
     } finally {
@@ -108,7 +91,7 @@ export default function Nutrition() {
     }
   };
 
-  const fallbackInsight =
+  const insightMessage =
     remainingCalories > 0
       ? `You're doing well with your nutrition today. You have ${remainingCalories} kcal remaining and ${remainingProtein}g of protein left to reach your daily target.`
       : `You've hit your calorie goal for today, ${user?.name || "there"}. Nice work staying on track.`;
@@ -136,37 +119,22 @@ export default function Nutrition() {
 
       <div className="macros-grid">
         <div className="nutrition-card macro-card">
-          <div className="card-title">
-            <span className="icon">🥩</span> Protein
-          </div>
-          <div className="macro-value">
-            <strong>{totalProtein}g</strong>
-            <span>/ {PROTEIN_GOAL}g</span>
-          </div>
+          <div className="card-title"><span className="icon">🥩</span> Protein</div>
+          <div className="macro-value"><strong>{totalProtein}g</strong><span>/ {PROTEIN_GOAL}g</span></div>
           <div className="progress-bar-container">
             <div className="progress-bar-fill" style={{ width: `${proteinPct}%` }} />
           </div>
         </div>
         <div className="nutrition-card macro-card">
-          <div className="card-title">
-            <span className="icon">🍚</span> Carbs
-          </div>
-          <div className="macro-value">
-            <strong>{totalCarbs}g</strong>
-            <span>/ {CARB_GOAL}g</span>
-          </div>
+          <div className="card-title"><span className="icon">🍚</span> Carbs</div>
+          <div className="macro-value"><strong>{totalCarbs}g</strong><span>/ {CARB_GOAL}g</span></div>
           <div className="progress-bar-container">
             <div className="progress-bar-fill" style={{ width: `${carbsPct}%` }} />
           </div>
         </div>
         <div className="nutrition-card macro-card">
-          <div className="card-title">
-            <span className="icon">🥑</span> Fats
-          </div>
-          <div className="macro-value">
-            <strong>{totalFats}g</strong>
-            <span>/ {FAT_GOAL}g</span>
-          </div>
+          <div className="card-title"><span className="icon">🥑</span> Fats</div>
+          <div className="macro-value"><strong>{totalFats}g</strong><span>/ {FAT_GOAL}g</span></div>
           <div className="progress-bar-container">
             <div className="progress-bar-fill" style={{ width: `${fatsPct}%` }} />
           </div>
@@ -176,57 +144,13 @@ export default function Nutrition() {
       <div className="nutrition-card meals-section">
         <div className="meals-header">
           <h2>Today's Meals</h2>
-          <div className="meals-header-actions">
-            <button
-              className="scan-tab-btn"
-              onClick={() => { setScanMode(true); setShowForm(true); }}
-              title="Scan food photo with AI"
-            >
-              📸 AI Scan
-            </button>
-            <button className="add-meal-btn" onClick={() => { setScanMode(false); setShowForm((s) => !s); }}>
-              {showForm && !scanMode ? "Cancel" : "+ Add Meal"}
-            </button>
-          </div>
+          <button className="add-meal-btn" onClick={() => setShowForm((s) => !s)}>
+            {showForm ? "Cancel" : "+ Add Meal"}
+          </button>
         </div>
 
-        {showForm && scanMode && (
-          <div style={{ marginBottom: 16 }}>
-            <FoodPhotoScan
-              onResult={(result) => {
-                setDescription(result.description);
-                setCalories(String(result.calories));
-                setProtein(String(result.protein));
-                setCarbs(String(result.carbs));
-                setFats(String(result.fats));
-                setType(
-                  result.mealType.charAt(0).toUpperCase() + result.mealType.slice(1)
-                );
-                setScanMode(false);
-              }}
-            />
-            <button
-              className="scan-retry-btn"
-              style={{ marginTop: 8 }}
-              onClick={() => { setScanMode(false); setShowForm(false); }}
-              type="button"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
-
-        {showForm && !scanMode && (
+        {showForm && (
           <form onSubmit={handleAddMeal} style={{ marginBottom: 20, display: "grid", gap: 10 }}>
-            <FoodSearch
-              onSelect={(food) => {
-                setDescription(food.name);
-                setCalories(String(food.calories));
-                setProtein(String(food.protein));
-                setCarbs(String(food.carbs));
-                setFats(String(food.fats));
-              }}
-            />
             <select value={type} onChange={(e) => setType(e.target.value)} style={{ padding: 8, borderRadius: 8 }}>
               <option>Breakfast</option>
               <option>Lunch</option>
@@ -241,35 +165,10 @@ export default function Nutrition() {
               style={{ padding: 8, borderRadius: 8 }}
             />
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-              <input
-                placeholder="Calories"
-                type="number"
-                value={calories}
-                onChange={(e) => setCalories(e.target.value)}
-                required
-                style={{ padding: 8, borderRadius: 8 }}
-              />
-              <input
-                placeholder="Protein (g)"
-                type="number"
-                value={protein}
-                onChange={(e) => setProtein(e.target.value)}
-                style={{ padding: 8, borderRadius: 8 }}
-              />
-              <input
-                placeholder="Carbs (g)"
-                type="number"
-                value={carbs}
-                onChange={(e) => setCarbs(e.target.value)}
-                style={{ padding: 8, borderRadius: 8 }}
-              />
-              <input
-                placeholder="Fats (g)"
-                type="number"
-                value={fats}
-                onChange={(e) => setFats(e.target.value)}
-                style={{ padding: 8, borderRadius: 8 }}
-              />
+              <input placeholder="Calories" type="number" value={calories} onChange={(e) => setCalories(e.target.value)} required style={{ padding: 8, borderRadius: 8 }} />
+              <input placeholder="Protein (g)" type="number" value={protein} onChange={(e) => setProtein(e.target.value)} style={{ padding: 8, borderRadius: 8 }} />
+              <input placeholder="Carbs (g)" type="number" value={carbs} onChange={(e) => setCarbs(e.target.value)} style={{ padding: 8, borderRadius: 8 }} />
+              <input placeholder="Fats (g)" type="number" value={fats} onChange={(e) => setFats(e.target.value)} style={{ padding: 8, borderRadius: 8 }} />
             </div>
             <button className="primary-button" type="submit" disabled={saving}>
               {saving ? "Saving..." : "Save Meal"}
@@ -301,7 +200,7 @@ export default function Nutrition() {
           <span className="robot-icon">🤖</span>
           <h2>AI Nutrition Insight</h2>
         </div>
-        <p>{insightLoading ? "Thinking about your day..." : aiInsight || fallbackInsight}</p>
+        <p>{insightMessage}</p>
       </div>
     </div>
   );

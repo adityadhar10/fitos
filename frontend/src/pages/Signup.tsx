@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 interface SignupProps {
-  onSwitchToLogin: () => void;
+  onSwitchToLogin?: () => void;
 }
 
-function Signup({ onSwitchToLogin }: SignupProps) {
+function Signup({ }: SignupProps) {
   const { signup } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -27,60 +28,59 @@ function Signup({ onSwitchToLogin }: SignupProps) {
   };
 
   return (
-    <div className="page" style={{ maxWidth: 400, margin: "80px auto" }}>
-      <div className="page-header">
-        <h1>Create account</h1>
-        <p>Get started with FitOS</p>
-      </div>
+    <div className="auth-page">
+      <div className="auth-box">
+        <div className="auth-logo">FitOS</div>
+        <h1 className="auth-title">Create account</h1>
+        <p className="auth-subtitle">Start your fitness journey</p>
 
-      <form className="page-card" onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 16 }}>
-          <label>Name</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            style={{ width: "100%", padding: 10, marginTop: 6, borderRadius: 8 }}
-          />
-        </div>
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="auth-field">
+            <label>Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              placeholder="Aditya Dhar"
+            />
+          </div>
 
-        <div style={{ marginBottom: 16 }}>
-          <label>Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ width: "100%", padding: 10, marginTop: 6, borderRadius: 8 }}
-          />
-        </div>
+          <div className="auth-field">
+            <label>Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="you@example.com"
+            />
+          </div>
 
-        <div style={{ marginBottom: 16 }}>
-          <label>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            style={{ width: "100%", padding: 10, marginTop: 6, borderRadius: 8 }}
-          />
-        </div>
+          <div className="auth-field">
+            <label>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              placeholder="Min 6 characters"
+            />
+          </div>
 
-        {error && <p style={{ color: "#f87171" }}>{error}</p>}
+          {error && <p className="auth-error">{error}</p>}
 
-        <button className="primary-button" type="submit" disabled={loading} style={{ width: "100%" }}>
-          {loading ? "Creating account..." : "Sign Up"}
-        </button>
+          <button className="primary-button auth-submit" type="submit" disabled={loading}>
+            {loading ? "Creating account..." : "Sign Up"}
+          </button>
+        </form>
 
-        <p style={{ marginTop: 16, textAlign: "center" }}>
+        <p className="auth-switch">
           Already have an account?{" "}
-          <a onClick={onSwitchToLogin} style={{ cursor: "pointer", color: "#4ade80" }}>
-            Log in
-          </a>
+          <Link to="/">Log in</Link>
         </p>
-      </form>
+      </div>
     </div>
   );
 }

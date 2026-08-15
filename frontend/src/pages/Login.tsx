@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 interface LoginProps {
-  onSwitchToSignup: () => void;
+  onSwitchToSignup?: () => void;
 }
 
-function Login({ onSwitchToSignup }: LoginProps) {
+function Login({ }: LoginProps) {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,48 +27,47 @@ function Login({ onSwitchToSignup }: LoginProps) {
   };
 
   return (
-    <div className="page" style={{ maxWidth: 400, margin: "80px auto" }}>
-      <div className="page-header">
-        <h1>Welcome back</h1>
-        <p>Log in to FitOS</p>
-      </div>
+    <div className="auth-page">
+      <div className="auth-box">
+        <div className="auth-logo">FitOS</div>
+        <h1 className="auth-title">Welcome back</h1>
+        <p className="auth-subtitle">Log in to your fitness OS</p>
 
-      <form className="page-card" onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 16 }}>
-          <label>Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ width: "100%", padding: 10, marginTop: 6, borderRadius: 8 }}
-          />
-        </div>
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="auth-field">
+            <label>Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="you@example.com"
+            />
+          </div>
 
-        <div style={{ marginBottom: 16 }}>
-          <label>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ width: "100%", padding: 10, marginTop: 6, borderRadius: 8 }}
-          />
-        </div>
+          <div className="auth-field">
+            <label>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="••••••••"
+            />
+          </div>
 
-        {error && <p style={{ color: "#f87171" }}>{error}</p>}
+          {error && <p className="auth-error">{error}</p>}
 
-        <button className="primary-button" type="submit" disabled={loading} style={{ width: "100%" }}>
-          {loading ? "Logging in..." : "Log In"}
-        </button>
+          <button className="primary-button auth-submit" type="submit" disabled={loading}>
+            {loading ? "Logging in..." : "Log In"}
+          </button>
+        </form>
 
-        <p style={{ marginTop: 16, textAlign: "center" }}>
+        <p className="auth-switch">
           Don't have an account?{" "}
-          <a onClick={onSwitchToSignup} style={{ cursor: "pointer", color: "#4ade80" }}>
-            Sign up
-          </a>
+          <Link to="/signup">Sign up</Link>
         </p>
-      </form>
+      </div>
     </div>
   );
 }

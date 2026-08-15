@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import "../index.css";
-import { getWeightHistory, addWeightEntry } from "../services/api";
+import { getWeightHistory, addWeightEntry, getWorkouts } from "../services/api";
 import WeightChart from "../components/WeightChart";
+import MuscleHeatmap from "../components/MuscleHeatmap";
 
 interface WeightEntry {
   id: string;
@@ -9,10 +10,17 @@ interface WeightEntry {
   date: string;
 }
 
+interface WorkoutItem {
+  id: string;
+  name: string;
+  date: string;
+}
+
 const GOAL_WEIGHT_KG = 70;
 
 export default function Progress() {
   const [entries, setEntries] = useState<WeightEntry[]>([]);
+  const [workouts, setWorkouts] = useState<WorkoutItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -20,9 +28,12 @@ export default function Progress() {
 
   const loadEntries = () => {
     setLoading(true);
-    getWeightHistory()
-      .then((res) => setEntries(res.data.entries))
-      .catch((err) => console.error("Failed to load weight history:", err))
+    Promise.all([getWeightHistory(), getWorkouts()])
+      .then(([weightRes, workoutRes]) => {
+        setEntries(weightRes.data.entries);
+        setWorkouts(workoutRes.data.workouts);
+      })
+      .catch((err) => console.error("Failed to load progress data:", err))
       .finally(() => setLoading(false));
   };
 
@@ -74,7 +85,20 @@ export default function Progress() {
     <div className="page-container page-enter">
       <div className="page-header">
         <h1>Progress</h1>
-        <p>Track your body weight over time.</p>
+        <p>Muscle heatmap, weight trends, and your full training history.</p>
+      </div>
+
+      {/* ── Muscle Group Heatmap ── */}
+      <div className="section-card">
+        <div className="section-header">
+          <h2>💪 Muscle Group Heatmap</h2>
+          <span className="subtext" style={{ marginTop: 0 }}>Last 7 days</span>
+        </div>
+        {loading ? (
+          <div className="skeleton" style={{ height: 300, borderRadius: 12 }} />
+        ) : (
+          <MuscleHeatmap workouts={workouts} />
+        )}
       </div>
 
       {/* Stats row */}
