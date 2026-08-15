@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { login as apiLogin, signup as apiSignup, getMe } from "../services/api";
 
 interface User {
