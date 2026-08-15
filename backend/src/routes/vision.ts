@@ -17,9 +17,7 @@ const analyzeSchema = z.object({
 router.post('/analyze', requireAuth, validate(analyzeSchema), async (req: AuthRequest, res: Response) => {
   try {
     const { imageBase64, mimeType } = req.body;
-
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
     const prompt = `You are a precise nutrition analysis AI. Analyze this food photo and respond ONLY with a valid JSON object — no markdown, no explanation, just raw JSON.
 
 The JSON must have exactly these fields:
