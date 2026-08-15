@@ -10,7 +10,7 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
       where: { userId: req.userId },
       include: { sets: true },
       orderBy: { date: 'desc' },
-      take: 20,
+      take: 30,
     });
 
     res.json({ workouts });
@@ -49,4 +49,27 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
   }
 });
 
+router.delete('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req.params['id'] as string;
+
+    // Verify ownership before deleting
+    const workout = await prisma.workout.findFirst({
+      where: { id, userId: req.userId },
+    });
+
+    if (!workout) {
+      return res.status(404).json({ error: 'Workout not found.' });
+    }
+
+    await prisma.workout.delete({ where: { id } });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete workout error:', error);
+    res.status(500).json({ error: 'Failed to delete workout.' });
+  }
+});
+
 export default router;
+

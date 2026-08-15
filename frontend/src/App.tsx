@@ -10,6 +10,15 @@ import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 
+const NAV_ITEMS = [
+  { id: "dashboard", label: "Dashboard", icon: "📊" },
+  { id: "nutrition", label: "Nutrition", icon: "🥗" },
+  { id: "workout", label: "Workout", icon: "🏋️" },
+  { id: "activity", label: "Activity", icon: "⚡" },
+  { id: "progress", label: "Progress", icon: "📈" },
+  { id: "settings", label: "Settings", icon: "⚙️" },
+];
+
 function App() {
   const { user, loading, logout } = useAuth();
   const [page, setPage] = useState("dashboard");
@@ -22,8 +31,19 @@ function App() {
 
   if (loading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", color: "white" }}>
-        Loading...
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          color: "#7a8580",
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 15,
+          gap: 10,
+        }}
+      >
+        <span style={{ fontSize: 24 }}>💪</span> Loading FitOS...
       </div>
     );
   }
@@ -39,31 +59,29 @@ function App() {
   return (
     <div className="app">
       <aside className="sidebar">
-        <h2>FitOS</h2>
+        <div className="sidebar-logo">
+          <span className="sidebar-logo-icon">💪</span>
+          <h2>FitOS</h2>
+        </div>
 
         <nav>
-          <button className={page === "dashboard" ? "active" : ""} onClick={() => changePage("dashboard")}>
-            Dashboard
-          </button>
-          <button className={page === "nutrition" ? "active" : ""} onClick={() => changePage("nutrition")}>
-            Nutrition
-          </button>
-          <button className={page === "workout" ? "active" : ""} onClick={() => changePage("workout")}>
-            Workout
-          </button>
-          <button className={page === "activity" ? "active" : ""} onClick={() => changePage("activity")}>
-            Activity
-          </button>
-          <button className={page === "progress" ? "active" : ""} onClick={() => changePage("progress")}>
-            Progress
-          </button>
-          <button className={page === "settings" ? "active" : ""} onClick={() => changePage("settings")}>
-            Settings
-          </button>
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              className={page === item.id ? "active" : ""}
+              onClick={() => changePage(item.id)}
+            >
+              <span className="nav-icon">{item.icon}</span>
+              <span className="nav-label">{item.label}</span>
+            </button>
+          ))}
         </nav>
 
         <div className="sidebar-bottom">
-          <button onClick={logout}>Log Out</button>
+          <button onClick={logout}>
+            <span className="nav-icon">🚪</span>
+            <span>Log Out</span>
+          </button>
         </div>
       </aside>
 

@@ -34,10 +34,12 @@ export const addMeal = (
   carbs?: number,
   fats?: number
 ) => api.post("/meals", { type, description, calories, protein, carbs, fats });
+
 // ---- Workouts ----
 export const getWorkouts = () => api.get("/workouts");
 export const addWorkout = (name: string, sets: { reps: number; weight: number }[]) =>
   api.post("/workouts", { name, sets });
+export const deleteWorkout = (id: string) => api.delete(`/workouts/${id}`);
 
 // ---- Weight ----
 export const getWeightHistory = () => api.get("/weight");
@@ -48,5 +50,8 @@ export const getTodayMetrics = () => api.get("/metrics/today");
 export const updateTodayMetrics = (steps?: number, sleepHours?: number) =>
   api.post("/metrics/today", { steps, sleepHours });
 export const getWeeklyMetrics = () => api.get("/metrics/weekly");
+export const getStreak = () => api.get("/metrics/streak");
+
 // ---- AI Insights ----
 export const getInsight = () => api.get("/insights");
+

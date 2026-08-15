@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "../index.css";
 import { getWeightHistory, addWeightEntry } from "../services/api";
+import WeightChart from "../components/WeightChart";
 
 interface WeightEntry {
   id: string;
@@ -29,9 +30,17 @@ export default function Progress() {
     loadEntries();
   }, []);
 
-  const currentWeight = entries.length > 0 ? entries[entries.length - 1].weight : null;
-  const diff = currentWeight !== null ? Math.abs(currentWeight - GOAL_WEIGHT_KG).toFixed(1) : null;
+  const sorted = [...entries].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  const currentWeight = sorted.length > 0 ? sorted[sorted.length - 1].weight : null;
+  const startWeight = sorted.length > 0 ? sorted[0].weight : null;
+  const totalChange =
+    currentWeight !== null && startWeight !== null
+      ? (currentWeight - startWeight).toFixed(1)
+      : null;
   const direction = currentWeight !== null && currentWeight > GOAL_WEIGHT_KG ? "lose" : "gain";
+  const remaining =
+    currentWeight !== null ? Math.abs(currentWeight - GOAL_WEIGHT_KG).toFixed(1) : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,43 +61,55 @@ export default function Progress() {
 
   const formatDate = (iso: string) => new Date(iso).toISOString().split("T")[0];
 
+  const changeClass =
+    totalChange === null
+      ? "neutral"
+      : Number(totalChange) < 0
+      ? "positive"
+      : Number(totalChange) > 0
+      ? "negative"
+      : "neutral";
+
   return (
-    <div className="page-container">
+    <div className="page-container page-enter">
       <div className="page-header">
         <h1>Progress</h1>
-        <p>Track your weight and long-term progress.</p>
+        <p>Track your body weight over time.</p>
       </div>
 
+      {/* Stats row */}
+      {!loading && currentWeight !== null && (
+        <div className="weight-stats-row">
+          <div className="weight-stat-item">
+            <div className="weight-stat-label">Current</div>
+            <div className="weight-stat-value neutral">{currentWeight}kg</div>
+          </div>
+          <div className="weight-stat-item">
+            <div className="weight-stat-label">Goal</div>
+            <div className="weight-stat-value neutral">{GOAL_WEIGHT_KG}kg</div>
+          </div>
+          <div className="weight-stat-item">
+            <div className="weight-stat-label">Total Change</div>
+            <div className={`weight-stat-value ${changeClass}`}>
+              {totalChange !== null
+                ? `${Number(totalChange) > 0 ? "+" : ""}${totalChange}kg`
+                : "—"}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chart */}
       <div className="section-card">
-        <div className="card-title">
-          <span className="icon">⚖️</span>
-          <h2>Current Weight</h2>
+        <div className="section-header">
+          <h2>📈 Weight Chart</h2>
+          <button className="action-btn" onClick={() => setShowForm((s) => !s)}>
+            {showForm ? "Cancel" : "+ Log Weight"}
+          </button>
         </div>
 
-        {loading && <p>Loading...</p>}
-
-        {!loading && currentWeight === null && (
-          <p className="subtext">No weight logged yet. Add your first entry below.</p>
-        )}
-
-        {!loading && currentWeight !== null && (
-          <>
-            <div className="weight-display">
-              <strong>{currentWeight}kg</strong>
-              <span className="target">/ {GOAL_WEIGHT_KG}kg goal</span>
-            </div>
-            <p className="subtext">
-              {diff}kg to {direction} to reach your goal
-            </p>
-          </>
-        )}
-
-        <button className="action-btn" style={{ marginTop: 16 }} onClick={() => setShowForm((s) => !s)}>
-          {showForm ? "Cancel" : "+ Log Weight"}
-        </button>
-
         {showForm && (
-          <form onSubmit={handleSubmit} style={{ marginTop: 16, display: "flex", gap: 8 }}>
+          <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, marginBottom: 16 }}>
             <input
               placeholder="Weight (kg)"
               type="number"
@@ -96,26 +117,68 @@ export default function Progress() {
               value={weightInput}
               onChange={(e) => setWeightInput(e.target.value)}
               required
-              style={{ padding: 8, borderRadius: 8, flex: 1 }}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 10,
+                flex: 1,
+                background: "#0f1511",
+                border: "1px solid #252d28",
+                color: "#fff",
+                fontSize: 14,
+                fontFamily: "inherit",
+                outline: "none",
+              }}
             />
             <button className="primary-button" type="submit" disabled={saving}>
               {saving ? "Saving..." : "Save"}
             </button>
           </form>
         )}
+
+        {loading ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "8px 0" }}>
+            <div className="skeleton" style={{ height: 200, borderRadius: 10 }} />
+          </div>
+        ) : (
+          <WeightChart entries={entries} goalWeight={GOAL_WEIGHT_KG} />
+        )}
+
+        {!loading && currentWeight !== null && remaining !== null && (
+          <p className="subtext" style={{ marginTop: 12, textAlign: "center" }}>
+            {remaining}kg to {direction} to reach your {GOAL_WEIGHT_KG}kg goal ·{" "}
+            {entries.length} {entries.length === 1 ? "entry" : "entries"} logged
+          </p>
+        )}
       </div>
 
+      {/* History list */}
       <div className="section-card">
-        <div className="card-title">
-          <span className="icon">📈</span>
-          <h2>Weight History</h2>
+        <div className="section-header">
+          <h2>⚖️ History</h2>
+          <span className="subtext" style={{ marginTop: 0 }}>
+            {entries.length} {entries.length === 1 ? "entry" : "entries"}
+          </span>
         </div>
 
         <div className="history-list">
-          {loading && <p>Loading...</p>}
-          {!loading && entries.length === 0 && <p>No entries yet.</p>}
+          {loading && (
+            <>
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="history-item">
+                  <div className="skeleton skeleton-text" />
+                  <div className="skeleton skeleton-text short" />
+                </div>
+              ))}
+            </>
+          )}
+          {!loading && entries.length === 0 && (
+            <div className="empty-state">
+              <div className="empty-icon">⚖️</div>
+              <p>No entries yet. Log your first weight above.</p>
+            </div>
+          )}
           {!loading &&
-            [...entries].reverse().map((entry) => (
+            [...sorted].reverse().map((entry) => (
               <div key={entry.id} className="history-item">
                 <span className="history-date">{formatDate(entry.date)}</span>
                 <strong className="history-weight">{entry.weight}kg</strong>

@@ -78,4 +78,55 @@ router.get('/weekly', requireAuth, async (req: AuthRequest, res: Response) => {
   }
 });
 
+// GET /api/metrics/streak — consecutive days with any activity (steps > 0 OR meals logged)
+router.get('/streak', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    // Get last 60 days of metrics where steps > 0
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    sixtyDaysAgo.setHours(0, 0, 0, 0);
+
+    const [metrics, meals] = await Promise.all([
+      prisma.dailyMetric.findMany({
+        where: { userId: req.userId, date: { gte: sixtyDaysAgo }, steps: { gt: 0 } },
+        select: { date: true },
+        orderBy: { date: 'desc' },
+      }),
+      prisma.meal.findMany({
+        where: { userId: req.userId, createdAt: { gte: sixtyDaysAgo } },
+        select: { createdAt: true },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    // Collect unique active days (date strings YYYY-MM-DD)
+    const activeDays = new Set<string>();
+    for (const m of metrics) {
+      activeDays.add(new Date(m.date).toDateString());
+    }
+    for (const m of meals) {
+      activeDays.add(new Date(m.createdAt).toDateString());
+    }
+
+    // Count consecutive days back from today
+    let streak = 0;
+    const today = new Date();
+    for (let i = 0; i < 60; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      if (activeDays.has(d.toDateString())) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    res.json({ streak });
+  } catch (error) {
+    console.error('Get streak error:', error);
+    res.status(500).json({ error: 'Failed to fetch streak.' });
+  }
+});
+
 export default router;
+

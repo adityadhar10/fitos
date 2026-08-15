@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import "../index.css";
-import { getMeals, getTodayMetrics, updateTodayMetrics, getWeeklyMetrics, getInsight } from "../services/api";
+import { getMeals, getTodayMetrics, updateTodayMetrics, getWeeklyMetrics, getInsight, getStreak } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const CALORIE_GOAL = 2400;
@@ -13,6 +13,13 @@ interface WeeklyPoint {
   steps: number;
 }
 
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
 
@@ -22,6 +29,7 @@ export default function Dashboard() {
   const [sleepHours, setSleepHours] = useState(0);
   const [weekly, setWeekly] = useState<WeeklyPoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [streak, setStreak] = useState(0);
 
   const [editingMetrics, setEditingMetrics] = useState(false);
   const [stepsInput, setStepsInput] = useState("");
@@ -34,10 +42,11 @@ export default function Dashboard() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [mealsRes, metricsRes, weeklyRes] = await Promise.all([
+      const [mealsRes, metricsRes, weeklyRes, streakRes] = await Promise.all([
         getMeals(),
         getTodayMetrics(),
         getWeeklyMetrics(),
+        getStreak(),
       ]);
 
       const meals = mealsRes.data.meals as { calories: number; protein: number }[];
@@ -46,6 +55,7 @@ export default function Dashboard() {
 
       setSteps(metricsRes.data.metric.steps);
       setSleepHours(metricsRes.data.metric.sleepHours);
+      setStreak(streakRes.data.streak ?? 0);
 
       const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
       const today = new Date();
@@ -86,9 +96,15 @@ export default function Dashboard() {
   const stepsPct = Math.min(100, (steps / STEP_GOAL) * 100);
   const sleepPct = Math.min(100, (sleepHours / SLEEP_GOAL) * 100);
 
-  const fitnessScore = Math.round((caloriesPct + proteinPct + stepsPct + sleepPct) / 4);
+  // Consistency score: how many of last 7 days had steps > 0
+  const activeDaysCount = weekly.filter((w) => w.steps > 0).length;
+  const consistencyPct = Math.round((activeDaysCount / 7) * 100);
 
-  const maxWeeklySteps = Math.max(12000, ...weekly.map((w) => w.steps));
+  const fitnessScore = Math.round(
+    (caloriesPct * 0.3 + proteinPct * 0.2 + stepsPct * 0.3 + sleepPct * 0.1 + consistencyPct * 0.1)
+  );
+
+  const maxWeeklySteps = Math.max(5000, ...weekly.map((w) => w.steps));
 
   const handleSaveMetrics = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,25 +127,62 @@ export default function Dashboard() {
   };
 
   const STATS_DATA = [
-    { id: "calories", icon: "🔥", label: "Calories", value: totalCalories.toLocaleString(), target: `/ ${CALORIE_GOAL.toLocaleString()} kcal` },
-    { id: "protein", icon: "🥩", label: "Protein", value: `${totalProtein}g`, target: `/ ${PROTEIN_GOAL}g` },
-    { id: "steps", icon: "🏃", label: "Steps", value: steps.toLocaleString(), target: `/ ${STEP_GOAL.toLocaleString()}` },
-    { id: "sleep", icon: "😴", label: "Sleep", value: `${sleepHours}h`, target: `/ ${SLEEP_GOAL}h` },
+    {
+      id: "calories",
+      icon: "🔥",
+      label: "Calories",
+      value: totalCalories.toLocaleString(),
+      target: `/ ${CALORIE_GOAL.toLocaleString()} kcal`,
+      pct: caloriesPct,
+    },
+    {
+      id: "protein",
+      icon: "🥩",
+      label: "Protein",
+      value: `${totalProtein}g`,
+      target: `/ ${PROTEIN_GOAL}g`,
+      pct: proteinPct,
+    },
+    {
+      id: "steps",
+      icon: "🏃",
+      label: "Steps",
+      value: steps.toLocaleString(),
+      target: `/ ${STEP_GOAL.toLocaleString()}`,
+      pct: stepsPct,
+    },
+    {
+      id: "sleep",
+      icon: "😴",
+      label: "Sleep",
+      value: `${sleepHours}h`,
+      target: `/ ${SLEEP_GOAL}h`,
+      pct: sleepPct,
+    },
+  ];
+
+  const SCORE_BARS = [
+    { label: "Nutrition", pct: Math.round(caloriesPct), cls: "nutrition" },
+    { label: "Activity", pct: Math.round(stepsPct), cls: "activity" },
+    { label: "Sleep", pct: Math.round(sleepPct), cls: "sleep" },
+    { label: "Consistency", pct: consistencyPct, cls: "consistency" },
   ];
 
   return (
-    <div className="dashboard">
+    <div className="dashboard page-enter">
       <div className="dashboard-header">
-        <h1>Good morning {user?.name ? `, ${user.name}` : ""} 👋</h1>
-        <p>Your fitness overview for today</p>
+        <h1>
+          {getGreeting()}{user?.name ? `, ${user.name.split(" ")[0]}` : ""} 👋
+        </h1>
+        <p>Here's your fitness overview for today.</p>
       </div>
 
+      {/* Fitness Score + breakdown */}
       <div className="fitness-score">
-        <div className="fitness-score-header">
-          <h2>Fitness Score</h2>
-        </div>
-
-        <div className="fitness-score-content">
+        <div className="fitness-score-left">
+          <div className="fitness-score-header">
+            <h2>FITNESS SCORE</h2>
+          </div>
           <div className="score-ring">
             <svg viewBox="0 0 140 140">
               <circle className="bg" cx="70" cy="70" r="60" />
@@ -148,9 +201,33 @@ export default function Dashboard() {
               <span>/ 100</span>
             </div>
           </div>
+          {streak > 0 && (
+            <div className="streak-badge">
+              🔥 {streak}-day streak
+            </div>
+          )}
+        </div>
+
+        <div className="fitness-score-right">
+          <h2>Score Breakdown</h2>
+          <div className="score-breakdown">
+            {SCORE_BARS.map((bar) => (
+              <div key={bar.label} className="score-bar-row">
+                <span className="score-bar-label">{bar.label}</span>
+                <div className="score-bar-track">
+                  <div
+                    className={`score-bar-fill ${bar.cls}`}
+                    style={{ width: loading ? "0%" : `${bar.pct}%` }}
+                  />
+                </div>
+                <span className="score-bar-value">{loading ? "-" : `${bar.pct}%`}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
+      {/* Stat cards */}
       <div className="stats-grid">
         {STATS_DATA.map((stat) => (
           <div key={stat.id} className="stat-card">
@@ -158,37 +235,70 @@ export default function Dashboard() {
               <span className="stat-icon">{stat.icon}</span> {stat.label}
             </div>
             <div className="stat-value">
-              <strong>{loading ? "-" : stat.value}</strong>
-              <span>{stat.target}</span>
+              {loading ? (
+                <div className="skeleton skeleton-number" />
+              ) : (
+                <>
+                  <strong>{stat.value}</strong>
+                  <span>{stat.target}</span>
+                </>
+              )}
+            </div>
+            <div className="stat-progress">
+              <div
+                className="stat-progress-fill"
+                style={{ width: loading ? "0%" : `${stat.pct}%` }}
+              />
             </div>
           </div>
         ))}
       </div>
 
-      <div className="section-card" style={{ marginTop: 16 }}>
+      {/* Update steps & sleep */}
+      <div className="section-card">
         <div className="section-header">
-          <h2>Update Steps & Sleep</h2>
+          <h2>⚡ Update Steps & Sleep</h2>
           <button className="action-btn" onClick={() => setEditingMetrics((s) => !s)}>
             {editingMetrics ? "Cancel" : "Edit"}
           </button>
         </div>
 
         {editingMetrics && (
-          <form onSubmit={handleSaveMetrics} style={{ display: "flex", gap: 8, marginTop: 12 }}>
+          <form onSubmit={handleSaveMetrics} style={{ display: "flex", gap: 8 }}>
             <input
               placeholder="Steps"
               type="number"
               value={stepsInput}
               onChange={(e) => setStepsInput(e.target.value)}
-              style={{ padding: 8, borderRadius: 8, flex: 1 }}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 10,
+                flex: 1,
+                background: "#0f1511",
+                border: "1px solid #252d28",
+                color: "#fff",
+                fontSize: 14,
+                fontFamily: "inherit",
+                outline: "none",
+              }}
             />
             <input
-              placeholder="Sleep hours"
+              placeholder="Sleep (hrs)"
               type="number"
               step="0.1"
               value={sleepInput}
               onChange={(e) => setSleepInput(e.target.value)}
-              style={{ padding: 8, borderRadius: 8, flex: 1 }}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 10,
+                flex: 1,
+                background: "#0f1511",
+                border: "1px solid #252d28",
+                color: "#fff",
+                fontSize: 14,
+                fontFamily: "inherit",
+                outline: "none",
+              }}
             />
             <button className="primary-button" type="submit" disabled={saving}>
               {saving ? "Saving..." : "Save"}
@@ -197,10 +307,18 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* Weekly chart */}
       <div className="weekly-chart">
         <div className="weekly-chart-header">
-          <h2>Weekly Activity</h2>
-          <p>Steps over the last 7 days</p>
+          <div>
+            <h2>Weekly Activity</h2>
+            <p>Steps over the last 7 days</p>
+          </div>
+          {activeDaysCount > 0 && (
+            <span style={{ color: "#4ade80", fontSize: 13, fontWeight: 600 }}>
+              {activeDaysCount}/7 active days
+            </span>
+          )}
         </div>
 
         <div className="chart-area">
@@ -214,11 +332,7 @@ export default function Dashboard() {
 
           <div className="chart-content">
             <div className="chart-grid">
-              <div />
-              <div />
-              <div />
-              <div />
-              <div />
+              <div /><div /><div /><div /><div />
             </div>
 
             <div className="bars">
@@ -236,9 +350,17 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="ai-insight" style={{ marginTop: 16 }}>
+      {/* AI Insight */}
+      <div className="ai-insight">
         <h2>🤖 AI Insight</h2>
-        <p>{insightLoading ? "Thinking about your day..." : aiInsight || "No insight available right now."}</p>
+        {insightLoading ? (
+          <>
+            <div className="skeleton skeleton-text wide" style={{ marginBottom: 6 }} />
+            <div className="skeleton skeleton-text" />
+          </>
+        ) : (
+          <p>{aiInsight || "No insight available right now."}</p>
+        )}
       </div>
     </div>
   );
