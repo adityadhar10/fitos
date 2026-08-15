@@ -13,7 +13,15 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. mobile apps, curl)
+    if (!origin) return callback(null, true);
+    // Allow any localhost port for local development
+    if (origin.startsWith('http://localhost:')) return callback(null, true);
+    // Allow production frontend URL from environment variable
+    if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 app.use(express.json());
