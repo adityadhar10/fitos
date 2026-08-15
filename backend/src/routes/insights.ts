@@ -23,11 +23,10 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
       prisma.weightEntry.findMany({ where: { userId: req.userId }, orderBy: { date: 'desc' }, take: 2 }),
       prisma.dailyMetric.findFirst({ where: { userId: req.userId, date: { gte: startOfDay } } }),
     ]);
-
-    const totalCalories = meals.reduce((sum, m) => sum + m.calories, 0);
-    const totalProtein = meals.reduce((sum, m) => sum + m.protein, 0);
-    const totalCarbs = meals.reduce((sum, m) => sum + m.carbs, 0);
-    const totalFats = meals.reduce((sum, m) => sum + m.fats, 0);
+const totalCalories = meals.reduce((sum: number, m: { calories: number }) => sum + m.calories, 0);
+    const totalProtein = meals.reduce((sum: number, m: { protein: number }) => sum + m.protein, 0);
+    const totalCarbs = meals.reduce((sum: number, m: { carbs: number }) => sum + m.carbs, 0);
+    const totalFats = meals.reduce((sum: number, m: { fats: number }) => sum + m.fats, 0);
     const steps = metric?.steps || 0;
     const sleepHours = metric?.sleepHours || 0;
 
@@ -40,8 +39,7 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
 
     const workoutSummary =
       workouts.length > 0
-        ? workouts.map((w) => `${w.name} (${w.sets.length} sets)`).join(', ')
-        : 'No workout logged today.';
+? workouts.map((w: { name: string; sets: unknown[] }) => `${w.name} (${w.sets.length} sets)`).join(', ')        : 'No workout logged today.';
 
     const prompt = `You are a friendly, encouraging fitness coach AI inside an app called FitOS. Based on the following real data for today, write ONE short, specific, personalized insight (2-3 sentences max, no headers, no bullet points, plain text only). Be warm but concise, and reference actual numbers where relevant.
 
