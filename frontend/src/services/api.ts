@@ -48,3 +48,5 @@ export const getTodayMetrics = () => api.get("/metrics/today");
 export const updateTodayMetrics = (steps?: number, sleepHours?: number) =>
   api.post("/metrics/today", { steps, sleepHours });
 export const getWeeklyMetrics = () => api.get("/metrics/weekly");
+// ---- AI Insights ----
+export const getInsight = () => api.get("/insights");
