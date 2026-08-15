@@ -18,11 +18,15 @@ app.use(cors({
     if (!origin) return callback(null, true);
     // Allow any localhost port for local development
     if (origin.startsWith('http://localhost:')) return callback(null, true);
+    // Allow any Vercel preview/production deployment
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
     // Allow production frontend URL from environment variable
     if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return callback(null, true);
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
 
