@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import "../index.css";
-import { getMeals, getTodayMetrics, updateTodayMetrics, getWeeklyMetrics } from "../services/api";
+import { getMeals, getTodayMetrics, updateTodayMetrics, getWeeklyMetrics, getInsight } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const CALORIE_GOAL = 2400;
@@ -27,6 +27,9 @@ export default function Dashboard() {
   const [stepsInput, setStepsInput] = useState("");
   const [sleepInput, setSleepInput] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const [aiInsight, setAiInsight] = useState<string | null>(null);
+  const [insightLoading, setInsightLoading] = useState(true);
 
   const loadAll = async () => {
     setLoading(true);
@@ -65,8 +68,17 @@ export default function Dashboard() {
     }
   };
 
+  const loadInsight = () => {
+    setInsightLoading(true);
+    getInsight()
+      .then((res) => setAiInsight(res.data.insight))
+      .catch((err) => console.error("Failed to load AI insight:", err))
+      .finally(() => setInsightLoading(false));
+  };
+
   useEffect(() => {
     loadAll();
+    loadInsight();
   }, []);
 
   const caloriesPct = Math.min(100, (totalCalories / CALORIE_GOAL) * 100);
@@ -90,6 +102,7 @@ export default function Dashboard() {
       setSleepInput("");
       setEditingMetrics(false);
       loadAll();
+      loadInsight();
     } catch (err) {
       console.error("Failed to update metrics:", err);
     } finally {
@@ -120,7 +133,7 @@ export default function Dashboard() {
           <div className="score-ring">
             <svg viewBox="0 0 140 140">
               <circle className="bg" cx="70" cy="70" r="60" />
-                <circle
+              <circle
                 className="progress"
                 cx="70"
                 cy="70"
@@ -221,6 +234,11 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="ai-insight" style={{ marginTop: 16 }}>
+        <h2>🤖 AI Insight</h2>
+        <p>{insightLoading ? "Thinking about your day..." : aiInsight || "No insight available right now."}</p>
       </div>
     </div>
   );
