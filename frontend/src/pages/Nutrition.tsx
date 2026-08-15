@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "../index.css";
 import { getMeals, addMeal, getInsight } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import FoodSearch from "../components/FoodSearch";
 
 interface Meal {
   id: string;
@@ -180,6 +181,15 @@ export default function Nutrition() {
 
         {showForm && (
           <form onSubmit={handleAddMeal} style={{ marginBottom: 20, display: "grid", gap: 10 }}>
+            <FoodSearch
+              onSelect={(food) => {
+                setDescription(food.name);
+                setCalories(String(food.calories));
+                setProtein(String(food.protein));
+                setCarbs(String(food.carbs));
+                setFats(String(food.fats));
+              }}
+            />
             <select value={type} onChange={(e) => setType(e.target.value)} style={{ padding: 8, borderRadius: 8 }}>
               <option>Breakfast</option>
               <option>Lunch</option>
