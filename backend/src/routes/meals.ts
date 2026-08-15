@@ -46,16 +46,16 @@ const { type, description, calories, protein, carbs, fats } = req.body;
     res.status(500).json({ error: 'Failed to create meal.' });
   }
 });
-
-router.delete('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
+    router.delete('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const meal = await prisma.meal.findUnique({ where: { id: req.params.id } });
+    const mealId = String(req.params.id);
+    const meal = await prisma.meal.findUnique({ where: { id: mealId } });
 
     if (!meal || meal.userId !== req.userId) {
       return res.status(404).json({ error: 'Meal not found.' });
     }
 
-    await prisma.meal.delete({ where: { id: req.params.id } });
+    await prisma.meal.delete({ where: { id: mealId } });
     res.json({ success: true });
   } catch (error) {
     console.error('Delete meal error:', error);

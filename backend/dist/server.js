@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
@@ -7,28 +7,23 @@ import workoutRoutes from './routes/workouts.js';
 import weightRoutes from './routes/weight.js';
 import metricsRoutes from './routes/metrics.js';
 import insightsRoutes from './routes/insights.js';
-
 dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 5001;
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true,
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    credentials: true,
 }));
 app.use(express.json());
-
-app.get('/api/health', (req: Request, res: Response) => {
-  res.json({ status: 'ok', message: 'FitOS Backend Server running smoothly!' });
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', message: 'FitOS Backend Server running smoothly!' });
 });
-
 app.use('/api/auth', authRoutes);
 app.use('/api/meals', mealRoutes);
 app.use('/api/workouts', workoutRoutes);
 app.use('/api/weight', weightRoutes);
 app.use('/api/metrics', metricsRoutes);
 app.use('/api/insights', insightsRoutes);
-
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
