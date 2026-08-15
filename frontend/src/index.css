@@ -1128,7 +1128,8 @@ a {
 .workout-meta {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .workout-date {
@@ -1156,6 +1157,28 @@ a {
 .workout-delete-btn:hover {
   background: #2e1e1e;
   color: #f87171;
+}
+
+.workout-delete-btn.confirm {
+  border-color: #7f1d1d;
+  background: #450a0a;
+  color: #f87171;
+  font-weight: 600;
+}
+
+.workout-delete-btn.confirm:hover {
+  background: #7f1d1d;
+  color: #fca5a5;
+}
+
+.workout-delete-btn.cancel {
+  border-color: #1e2a1e;
+  color: #86efac;
+}
+
+.workout-delete-btn.cancel:hover {
+  background: #1e2a1e;
+  color: #4ade80;
 }
 
 .sets-list {

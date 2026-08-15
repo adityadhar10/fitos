@@ -49,6 +49,7 @@ export default function Workout() {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [setRows, setSetRows] = useState([{ reps: "", weight: "" }]);
@@ -100,10 +101,11 @@ export default function Workout() {
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
+    setConfirmDeleteId(null);
     try {
       await deleteWorkout(id);
       setWorkouts((ws) => ws.filter((w) => w.id !== id));
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Failed to delete workout:", err);
     } finally {
       setDeletingId(null);
@@ -259,13 +261,31 @@ export default function Workout() {
                             <span className="workout-volume">{volume.toLocaleString()}kg vol.</span>
                           )}
                           <span className="workout-date">📅 {formatDate(workout.date)}</span>
-                          <button
-                            className="workout-delete-btn"
-                            onClick={() => handleDelete(workout.id)}
-                            disabled={deletingId === workout.id}
-                          >
-                            {deletingId === workout.id ? "…" : "Delete"}
-                          </button>
+                          {confirmDeleteId === workout.id ? (
+                            <>
+                              <button
+                                className="workout-delete-btn confirm"
+                                onClick={() => handleDelete(workout.id)}
+                                disabled={deletingId === workout.id}
+                              >
+                                {deletingId === workout.id ? "Deleting…" : "Confirm?"}
+                              </button>
+                              <button
+                                className="workout-delete-btn cancel"
+                                onClick={() => setConfirmDeleteId(null)}
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              className="workout-delete-btn"
+                              onClick={() => setConfirmDeleteId(workout.id)}
+                              disabled={deletingId === workout.id}
+                            >
+                              Delete
+                            </button>
+                          )}
                         </div>
                       </div>
 
