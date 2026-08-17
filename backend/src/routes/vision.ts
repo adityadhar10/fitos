@@ -32,6 +32,15 @@ router.post('/analyze', requireAuth, validate(analyzeSchema), async (req: AuthRe
   try {
     const { imageBase64, mimeType } = req.body;
 
+    // Check if API key is configured
+    if (!process.env.GEMINI_API_KEY) {
+      console.error('GEMINI_API_KEY is not configured');
+      return res.status(500).json({ 
+        error: 'AI service not configured. Please contact support.',
+        details: 'API key missing'
+      });
+    }
+
     // Check rate limit before attempting API call
     if (visionRateLimiter.isRateLimited()) {
       return res.status(429).json({ 
@@ -68,10 +77,26 @@ Be as accurate as possible. If you cannot identify the food, use reasonable defa
       const result = await model.generateContent([prompt, imagePart]);
       raw = result.response.text().trim();
     } catch (apiErr: any) {
-      console.warn('Gemini 1.5 flash vision fallback to 1.5 pro:', apiErr);
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
-      const result = await model.generateContent([prompt, imagePart]);
-      raw = result.response.text().trim();
+      console.warn('Gemini 1.5 flash vision error:', apiErr.message, apiErr.status);
+      // Check if it's a quota/rate limit error
+      if (apiErr.status === 429 || apiErr.message?.includes('quota') || apiErr.message?.includes('rate limit')) {
+        return res.status(429).json({ 
+          error: 'API quota exceeded. Please wait before trying again.',
+          retryAfter: 60
+        });
+      }
+      
+      try {
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+        const result = await model.generateContent([prompt, imagePart]);
+        raw = result.response.text().trim();
+      } catch (fallbackErr: any) {
+        console.error('Gemini 1.5 pro vision also failed:', fallbackErr.message, fallbackErr.status);
+        return res.status(500).json({ 
+          error: 'AI service unavailable. Please try again later.',
+          details: fallbackErr.message 
+        });
+      }
     }
 
     // Strip markdown code fences if present
