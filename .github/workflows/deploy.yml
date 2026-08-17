@@ -9,15 +9,27 @@ jobs:
   deploy-backend:
     name: Deploy Backend → Railway
     runs-on: ubuntu-latest
+    container: ghcr.io/railwayapp/cli:latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
+      - name: Validate Railway secrets
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "::error::RAILWAY_TOKEN secret is missing. Create a Project Token in Railway → Project Settings → Tokens."
+            exit 1
+          fi
+          if [ -z "$RAILWAY_SERVICE_ID" ]; then
+            echo "::error::RAILWAY_SERVICE_ID secret is missing. Copy the service ID from Railway → backend service → Settings."
+            exit 1
+          fi
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
 
       - name: Deploy to Railway
-        run: railway up --service backend --detach
+        run: railway up --service=${{ secrets.RAILWAY_SERVICE_ID }} --ci
         working-directory: backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

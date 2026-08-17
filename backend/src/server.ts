@@ -51,6 +51,6 @@ app.use('/api/export', exportRoutes);
 // ── Global error handler (must be LAST) ──────────────────────────────────────
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`🚀 FitOS v2.0 running on http://localhost:${PORT}`);
+app.listen(Number(PORT), '0.0.0.0', () => {
+  console.log(`🚀 FitOS v2.0 running on port ${PORT}`);
 });
