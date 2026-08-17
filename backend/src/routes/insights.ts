@@ -6,6 +6,20 @@ import { requireAuth, AuthRequest } from '../middleware/auth.js';
 const router = Router();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
+// Simple rate limiter to prevent hitting Gemini API quota
+const rateLimiter = {
+  lastCall: 0,
+  minInterval: 60000, // 1 minute between API calls
+  isRateLimited(): boolean {
+    const now = Date.now();
+    if (now - this.lastCall < this.minInterval) {
+      return true;
+    }
+    this.lastCall = now;
+    return false;
+  }
+};
+
 router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const startOfDay = new Date();
@@ -56,25 +70,44 @@ ${weightTrend}
 Write the insight now:`;
 
     let insight = '';
-    try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-3.7-flash' });
-      const result = await model.generateContent(prompt);
-      insight = result.response.text().trim();
-    } catch (apiErr) {
+    
+    // Check rate limit before attempting API call
+    if (rateLimiter.isRateLimited()) {
+      console.warn('Rate limit active, using rule-based insight instead of API.');
+      const remainingCal = Math.max(0, user.calorieGoal - totalCalories);
+      const remainingProt = Math.max(0, user.proteinGoal - totalProtein);
+      if (totalCalories === 0 && steps === 0) {
+        insight = `Great start to the day, ${user.name}! Ready to fuel up with your first meal and hit your ${user.calorieGoal} kcal target? Let's crush today's goals.`;
+      } else if (remainingCal > 0) {
+        insight = `Solid effort today, ${user.name}! You're at ${totalCalories} / ${user.calorieGoal} kcal with ${remainingProt}g protein left to reach your daily target. Keep up the momentum!`;
+      } else {
+        insight = `Outstanding discipline, ${user.name}! You've reached your daily calorie goal and logged ${steps} steps. Fantastic consistency today!`;
+      }
+    } else {
       try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const result = await model.generateContent(prompt);
         insight = result.response.text().trim();
-      } catch (fallbackErr) {
-        console.warn('Gemini quota reached, using personalized rule-based coach insight.');
-        const remainingCal = Math.max(0, user.calorieGoal - totalCalories);
-        const remainingProt = Math.max(0, user.proteinGoal - totalProtein);
-        if (totalCalories === 0 && steps === 0) {
-          insight = `Great start to the day, ${user.name}! Ready to fuel up with your first meal and hit your ${user.calorieGoal} kcal target? Let's crush today's goals.`;
-        } else if (remainingCal > 0) {
-          insight = `Solid effort today, ${user.name}! You're at ${totalCalories} / ${user.calorieGoal} kcal with ${remainingProt}g protein left to reach your daily target. Keep up the momentum!`;
-        } else {
-          insight = `Outstanding discipline, ${user.name}! You've reached your daily calorie goal and logged ${steps} steps. Fantastic consistency today!`;
+      } catch (apiErr: any) {
+        console.warn('Gemini API error:', apiErr.message);
+        // Check if it's a quota/rate limit error (429)
+        const isQuotaError = apiErr.status === 429 || apiErr.message?.includes('quota') || apiErr.message?.includes('rate limit');
+        
+        try {
+          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+          const result = await model.generateContent(prompt);
+          insight = result.response.text().trim();
+        } catch (fallbackErr: any) {
+          console.warn('Gemini quota reached or API unavailable, using personalized rule-based coach insight.');
+          const remainingCal = Math.max(0, user.calorieGoal - totalCalories);
+          const remainingProt = Math.max(0, user.proteinGoal - totalProtein);
+          if (totalCalories === 0 && steps === 0) {
+            insight = `Great start to the day, ${user.name}! Ready to fuel up with your first meal and hit your ${user.calorieGoal} kcal target? Let's crush today's goals.`;
+          } else if (remainingCal > 0) {
+            insight = `Solid effort today, ${user.name}! You're at ${totalCalories} / ${user.calorieGoal} kcal with ${remainingProt}g protein left to reach your daily target. Keep up the momentum!`;
+          } else {
+            insight = `Outstanding discipline, ${user.name}! You've reached your daily calorie goal and logged ${steps} steps. Fantastic consistency today!`;
+          }
         }
       }
     }
