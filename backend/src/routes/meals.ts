@@ -8,9 +8,11 @@ const router = Router();
 
 // ── Zod schemas ──────────────────────────────────────────────────────────────
 const addMealSchema = z.object({
-  type: z.enum(['breakfast', 'lunch', 'dinner', 'snack'] as const, {
-    error: () => 'Type must be breakfast, lunch, dinner, or snack.',
-  }),
+  type: z.string().transform((val) => val.toLowerCase()).pipe(
+    z.enum(['breakfast', 'lunch', 'dinner', 'snack'] as const, {
+      error: () => 'Type must be breakfast, lunch, dinner, or snack.',
+    })
+  ),
   description: z.string().min(1, 'Description is required').max(200),
   calories: z.coerce.number().int().nonnegative('Calories must be 0 or more'),
   protein: z.coerce.number().int().nonnegative().optional().default(0),

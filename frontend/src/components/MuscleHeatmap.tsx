@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { getMusclesTouched, type MuscleGroup } from "../data/muscleMap";
 
 interface Workout {
   id: string;
   name: string;
+  muscleGroup?: string | null;
   date?: string;
 }
 
@@ -11,222 +12,410 @@ interface MuscleHeatmapProps {
   workouts: Workout[];
 }
 
-/**
- * Returns a color between dim-green and bright-green based on intensity 0–1.
- */
-function heatColor(intensity: number): string {
-  if (intensity === 0) return "transparent";
-  // From dim (#1a3325) to bright (#22c55e)
-  const r = Math.round(26 + (34 - 26) * intensity);
-  const g = Math.round(51 + (197 - 51) * intensity);
-  const b = Math.round(37 + (94 - 37) * intensity);
-  const opacity = 0.25 + 0.75 * intensity;
-  return `rgba(${r},${g},${b},${opacity})`;
+interface MuscleCategory {
+  name: string;
+  icon: string;
+  groups: MuscleGroup[];
 }
 
-/**
- * SVG path data for each muscle group region.
- * Viewbox is 200x420 — front body on left (x<100), back body on right (x>100).
- * Front: centered at x=50. Back: centered at x=150.
- */
-const MUSCLE_PATHS: Record<MuscleGroup, { front?: string; back?: string; label?: string }> = {
-  chest: {
-    front: "M 25,100 Q 50,90 75,100 L 75,125 Q 50,135 25,125 Z",
-    label: "Chest",
-  },
-  shoulders: {
-    front: "M 12,90 Q 20,75 30,85 L 28,105 Q 18,108 12,100 Z M 70,85 Q 80,75 88,90 L 88,100 Q 82,108 72,105 Z",
-    back: "M 112,90 Q 120,75 130,85 L 128,105 Q 118,108 112,100 Z M 170,85 Q 180,75 188,90 L 188,100 Q 182,108 172,105 Z",
-    label: "Shoulders",
-  },
-  triceps: {
-    back: "M 112,105 Q 108,120 110,140 L 118,140 Q 120,120 118,105 Z M 182,105 Q 188,120 190,140 L 182,140 Q 180,120 182,105 Z",
-    label: "Triceps",
-  },
-  biceps: {
-    front: "M 12,105 Q 8,120 10,140 L 18,140 Q 20,120 18,105 Z M 82,105 Q 88,120 90,140 L 82,140 Q 80,120 82,105 Z",
-    label: "Biceps",
-  },
-  forearms: {
-    front: "M 10,140 Q 6,160 8,175 L 16,175 Q 18,160 18,140 Z M 82,140 Q 88,160 90,175 L 82,175 Q 80,160 82,140 Z",
-    back: "M 110,140 Q 106,160 108,175 L 116,175 Q 118,160 118,140 Z M 182,140 Q 188,160 190,175 L 182,175 Q 180,160 182,140 Z",
-    label: "Forearms",
-  },
-  abs: {
-    front: "M 30,130 Q 50,128 70,130 L 68,200 Q 50,205 32,200 Z",
-    label: "Abs",
-  },
-  obliques: {
-    front: "M 22,130 L 30,130 L 32,200 L 18,190 Z M 70,130 L 78,130 L 82,190 L 68,200 Z",
-    label: "Obliques",
-  },
-  quads: {
-    front: "M 28,210 Q 40,208 50,210 L 48,310 Q 38,315 28,310 Z M 52,210 Q 62,208 72,210 L 72,310 Q 62,315 52,310 Z",
-    label: "Quads",
-  },
-  glutes: {
-    back: "M 128,210 Q 148,208 170,210 L 170,270 Q 148,278 128,270 Z",
-    label: "Glutes",
-  },
-  hamstrings: {
-    back: "M 128,270 Q 140,268 150,270 L 148,345 Q 138,350 128,345 Z M 152,270 Q 162,268 172,270 L 172,345 Q 162,350 152,345 Z",
-    label: "Hamstrings",
-  },
-  calves: {
-    back: "M 128,348 Q 140,346 150,348 L 148,400 Q 138,405 128,400 Z M 152,348 Q 162,346 172,348 L 172,400 Q 162,405 152,400 Z",
-    front: "M 28,312 Q 40,310 50,312 L 48,375 Q 38,380 28,375 Z M 52,312 Q 62,310 72,312 L 72,375 Q 62,380 52,375 Z",
-    label: "Calves",
-  },
-  upper_back: {
-    back: "M 128,95 Q 150,88 172,95 L 172,160 Q 150,168 128,160 Z",
-    label: "Upper Back",
-  },
-  lats: {
-    back: "M 125,128 Q 133,125 138,130 L 135,190 Q 128,195 122,190 Z M 162,130 Q 167,125 175,128 L 178,190 Q 172,195 165,190 Z",
-    label: "Lats",
-  },
-  lower_back: {
-    back: "M 132,190 Q 150,187 168,190 L 168,215 Q 150,220 132,215 Z",
-    label: "Lower Back",
-  },
-  traps: {
-    back: "M 128,75 Q 150,68 172,75 L 172,97 Q 150,90 128,97 Z",
-    label: "Traps",
-  },
-};
-
-// Body outline paths (front and back silhouettes in viewBox 0 0 200 420)
-const FRONT_BODY =
-  "M 50,10 Q 35,10 28,30 Q 20,55 20,80 L 12,80 Q 5,82 5,95 L 8,175 L 14,175 L 14,200 Q 22,205 28,200 L 28,380 Q 32,395 42,400 L 58,400 Q 68,395 72,380 L 72,200 Q 78,205 86,200 L 86,175 L 92,175 L 95,95 Q 95,82 88,80 L 80,80 Q 80,55 72,30 Q 65,10 50,10 Z";
-
-const BACK_BODY =
-  "M 150,10 Q 135,10 128,30 Q 120,55 120,80 L 112,80 Q 105,82 105,95 L 108,175 L 114,175 L 114,200 Q 122,205 128,200 L 128,380 Q 132,395 142,400 L 158,400 Q 168,395 172,380 L 172,200 Q 178,205 186,200 L 186,175 L 192,175 L 195,95 Q 195,82 188,80 L 180,80 Q 180,55 172,30 Q 165,10 150,10 Z";
-
-const HEAD_FRONT = "M 50,5 m -15,0 a 15,20 0 1 1 30,0 a 15,20 0 1 1 -30,0";
-const HEAD_BACK  = "M 150,5 m -15,0 a 15,20 0 1 1 30,0 a 15,20 0 1 1 -30,0";
+const CATEGORIES: MuscleCategory[] = [
+  { name: "Chest", icon: "🏋️", groups: ["chest"] },
+  { name: "Back & Lats", icon: "🦾", groups: ["lats", "upper_back", "lower_back", "traps"] },
+  { name: "Shoulders", icon: "⚡", groups: ["shoulders"] },
+  { name: "Arms", icon: "💪", groups: ["biceps", "triceps", "forearms"] },
+  { name: "Legs", icon: "🦵", groups: ["quads", "hamstrings", "glutes", "calves"] },
+  { name: "Core & Abs", icon: "🔥", groups: ["abs", "obliques"] },
+];
 
 export default function MuscleHeatmap({ workouts }: MuscleHeatmapProps) {
-  // Count how many times each muscle group was hit in the last 7 days
-  const heatMap = useMemo(() => {
-    const counts: Partial<Record<MuscleGroup, number>> = {};
+  const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
 
+  // Compute workout hits per muscle group in the last 7 days
+  const muscleHits = useMemo(() => {
+    const counts: Partial<Record<MuscleGroup, number>> = {};
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    for (const workout of workouts) {
-      const date = workout.date ? new Date(workout.date) : new Date();
-      if (date < sevenDaysAgo) continue;
-
-      const muscles = getMusclesTouched(workout.name);
-      for (const m of muscles) {
-        counts[m] = (counts[m] ?? 0) + 1;
+    for (const w of workouts) {
+      if (w.date && new Date(w.date) < sevenDaysAgo) continue;
+      const touched = getMusclesTouched(w.name);
+      for (const m of touched) {
+        counts[m] = (counts[m] || 0) + 1;
       }
     }
-
-    // Normalize: find max count
-    const maxCount = Math.max(1, ...Object.values(counts));
-
-    const heat: Partial<Record<MuscleGroup, number>> = {};
-    for (const [muscle, count] of Object.entries(counts) as [MuscleGroup, number][]) {
-      heat[muscle] = count / maxCount;
-    }
-
-    return heat;
+    return counts;
   }, [workouts]);
 
-  const muscleList = Object.keys(MUSCLE_PATHS) as MuscleGroup[];
+  const maxHits = useMemo(() => {
+    const values = Object.values(muscleHits) as number[];
+    return Math.max(1, ...values);
+  }, [muscleHits]);
 
-  // Legend entries: only muscles that are activated
-  const activeMuscles = muscleList.filter((m) => (heatMap[m] ?? 0) > 0);
+  const getFillColor = (group: MuscleGroup) => {
+    const hits = muscleHits[group] || 0;
+    if (hits === 0) return "#16221a";
+    const intensity = Math.min(1, hits / maxHits);
+    if (intensity > 0.7) return "#22c55e"; // bright emerald
+    if (intensity > 0.3) return "#16a34a"; // mid green
+    return "#15803d"; // deep green
+  };
+
+  const getGlowFilter = (group: MuscleGroup) => {
+    const hits = muscleHits[group] || 0;
+    if (hits > 0) return "drop-shadow(0px 0px 6px rgba(34, 197, 94, 0.6))";
+    return "none";
+  };
 
   return (
-    <div className="heatmap-wrapper">
-      <div className="heatmap-labels-row">
-        <span className="heatmap-side-label">Front</span>
-        <span className="heatmap-side-label">Back</span>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24, alignItems: "center" }}>
+      {/* ── Visual Body Diagrams (Front & Back) ── */}
+      <div style={{ background: "#0b110e", padding: "20px 16px", borderRadius: 16, border: "1px solid #1a261f" }}>
+        <div style={{ display: "flex", justifyContent: "space-around", marginBottom: 12 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "1px", color: "#8a978f" }}>FRONT VIEW</span>
+          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "1px", color: "#8a978f" }}>BACK VIEW</span>
+        </div>
+
+        <svg viewBox="0 0 340 380" style={{ width: "100%", maxHeight: 340, display: "block", margin: "0 auto" }}>
+          {/* ════════ FRONT BODY (X: 10 to 160) ════════ */}
+          <g transform="translate(10, 10)">
+            {/* Head */}
+            <ellipse cx="75" cy="24" rx="14" ry="18" fill="#18231c" stroke="#25352a" strokeWidth="1.5" />
+            {/* Neck */}
+            <path d="M 68,40 L 68,52 L 82,52 L 82,40 Z" fill="#18231c" stroke="#25352a" strokeWidth="1.5" />
+
+            {/* Shoulders */}
+            <path
+              d="M 46,54 Q 32,58 28,74 Q 40,78 48,68 Z"
+              fill={getFillColor("shoulders")}
+              stroke="#2e4235"
+              strokeWidth="1"
+              style={{ filter: getGlowFilter("shoulders"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Shoulders")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+            <path
+              d="M 104,54 Q 118,58 122,74 Q 110,78 102,68 Z"
+              fill={getFillColor("shoulders")}
+              stroke="#2e4235"
+              strokeWidth="1"
+              style={{ filter: getGlowFilter("shoulders"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Shoulders")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+
+            {/* Chest (Pectorals) */}
+            <path
+              d="M 50,58 Q 75,56 75,90 Q 52,94 48,72 Z"
+              fill={getFillColor("chest")}
+              stroke="#2e4235"
+              strokeWidth="1.2"
+              style={{ filter: getGlowFilter("chest"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Chest")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+            <path
+              d="M 100,58 Q 75,56 75,90 Q 98,94 102,72 Z"
+              fill={getFillColor("chest")}
+              stroke="#2e4235"
+              strokeWidth="1.2"
+              style={{ filter: getGlowFilter("chest"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Chest")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+
+            {/* Biceps */}
+            <path
+              d="M 26,76 Q 20,95 24,116 Q 34,114 34,92 Z"
+              fill={getFillColor("biceps")}
+              stroke="#2e4235"
+              strokeWidth="1"
+              style={{ filter: getGlowFilter("biceps"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Biceps")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+            <path
+              d="M 124,76 Q 130,95 126,116 Q 116,114 116,92 Z"
+              fill={getFillColor("biceps")}
+              stroke="#2e4235"
+              strokeWidth="1"
+              style={{ filter: getGlowFilter("biceps"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Biceps")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+
+            {/* Forearms */}
+            <path
+              d="M 22,118 Q 16,140 18,165 Q 26,165 28,140 Z"
+              fill={getFillColor("forearms")}
+              stroke="#2e4235"
+              strokeWidth="1"
+              style={{ filter: getGlowFilter("forearms"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Forearms")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+            <path
+              d="M 128,118 Q 134,140 132,165 Q 124,165 122,140 Z"
+              fill={getFillColor("forearms")}
+              stroke="#2e4235"
+              strokeWidth="1"
+              style={{ filter: getGlowFilter("forearms"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Forearms")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+
+            {/* Abs (Six Pack) */}
+            <path
+              d="M 58,94 L 92,94 L 90,154 L 60,154 Z"
+              fill={getFillColor("abs")}
+              stroke="#2e4235"
+              strokeWidth="1.2"
+              style={{ filter: getGlowFilter("abs"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Abs / Core")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+
+            {/* Obliques */}
+            <path
+              d="M 48,94 L 56,94 L 58,154 L 46,146 Z"
+              fill={getFillColor("obliques")}
+              stroke="#2e4235"
+              strokeWidth="1"
+              style={{ filter: getGlowFilter("obliques"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Obliques")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+            <path
+              d="M 102,94 L 94,94 L 92,154 L 104,146 Z"
+              fill={getFillColor("obliques")}
+              stroke="#2e4235"
+              strokeWidth="1"
+              style={{ filter: getGlowFilter("obliques"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Obliques")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+
+            {/* Quads (Thighs) */}
+            <path
+              d="M 48,162 Q 44,210 52,250 Q 72,250 72,162 Z"
+              fill={getFillColor("quads")}
+              stroke="#2e4235"
+              strokeWidth="1.2"
+              style={{ filter: getGlowFilter("quads"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Quads")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+            <path
+              d="M 102,162 Q 106,210 98,250 Q 78,250 78,162 Z"
+              fill={getFillColor("quads")}
+              stroke="#2e4235"
+              strokeWidth="1.2"
+              style={{ filter: getGlowFilter("quads"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Quads")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+
+            {/* Calves (Front) */}
+            <path
+              d="M 50,256 Q 46,295 52,340 Q 66,340 68,256 Z"
+              fill={getFillColor("calves")}
+              stroke="#2e4235"
+              strokeWidth="1"
+              style={{ filter: getGlowFilter("calves"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Calves")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+            <path
+              d="M 100,256 Q 104,295 98,340 Q 84,340 82,256 Z"
+              fill={getFillColor("calves")}
+              stroke="#2e4235"
+              strokeWidth="1"
+              style={{ filter: getGlowFilter("calves"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Calves")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+          </g>
+
+          {/* ════════ BACK BODY (X: 180 to 330) ════════ */}
+          <g transform="translate(180, 10)">
+            {/* Head back */}
+            <ellipse cx="75" cy="24" rx="14" ry="18" fill="#18231c" stroke="#25352a" strokeWidth="1.5" />
+            {/* Traps */}
+            <path
+              d="M 62,42 Q 75,48 88,42 L 96,62 Q 75,70 54,62 Z"
+              fill={getFillColor("traps")}
+              stroke="#2e4235"
+              strokeWidth="1.2"
+              style={{ filter: getGlowFilter("traps"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Traps")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+
+            {/* Upper Back / Lats */}
+            <path
+              d="M 52,64 Q 75,72 98,64 L 102,136 Q 75,146 48,136 Z"
+              fill={getFillColor("lats")}
+              stroke="#2e4235"
+              strokeWidth="1.2"
+              style={{ filter: getGlowFilter("lats"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Lats / Back")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+
+            {/* Triceps (Back of arms) */}
+            <path
+              d="M 28,74 Q 22,96 26,118 Q 36,116 36,90 Z"
+              fill={getFillColor("triceps")}
+              stroke="#2e4235"
+              strokeWidth="1"
+              style={{ filter: getGlowFilter("triceps"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Triceps")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+            <path
+              d="M 122,74 Q 128,96 124,118 Q 114,116 114,90 Z"
+              fill={getFillColor("triceps")}
+              stroke="#2e4235"
+              strokeWidth="1"
+              style={{ filter: getGlowFilter("triceps"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Triceps")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+
+            {/* Lower Back */}
+            <path
+              d="M 54,138 Q 75,146 96,138 L 94,158 Q 75,164 56,158 Z"
+              fill={getFillColor("lower_back")}
+              stroke="#2e4235"
+              strokeWidth="1"
+              style={{ filter: getGlowFilter("lower_back"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Lower Back")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+
+            {/* Glutes */}
+            <path
+              d="M 48,160 Q 75,166 75,200 Q 46,200 46,170 Z"
+              fill={getFillColor("glutes")}
+              stroke="#2e4235"
+              strokeWidth="1.2"
+              style={{ filter: getGlowFilter("glutes"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Glutes")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+            <path
+              d="M 102,160 Q 75,166 75,200 Q 104,200 104,170 Z"
+              fill={getFillColor("glutes")}
+              stroke="#2e4235"
+              strokeWidth="1.2"
+              style={{ filter: getGlowFilter("glutes"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Glutes")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+
+            {/* Hamstrings */}
+            <path
+              d="M 46,204 Q 44,235 52,252 Q 72,252 74,204 Z"
+              fill={getFillColor("hamstrings")}
+              stroke="#2e4235"
+              strokeWidth="1.2"
+              style={{ filter: getGlowFilter("hamstrings"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Hamstrings")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+            <path
+              d="M 104,204 Q 106,235 98,252 Q 78,252 76,204 Z"
+              fill={getFillColor("hamstrings")}
+              stroke="#2e4235"
+              strokeWidth="1.2"
+              style={{ filter: getGlowFilter("hamstrings"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Hamstrings")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+
+            {/* Calves (Back) */}
+            <path
+              d="M 48,256 Q 44,295 52,340 Q 66,340 70,256 Z"
+              fill={getFillColor("calves")}
+              stroke="#2e4235"
+              strokeWidth="1.2"
+              style={{ filter: getGlowFilter("calves"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Calves")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+            <path
+              d="M 102,256 Q 106,295 98,340 Q 84,340 80,256 Z"
+              fill={getFillColor("calves")}
+              stroke="#2e4235"
+              strokeWidth="1.2"
+              style={{ filter: getGlowFilter("calves"), cursor: "pointer", transition: "fill 0.3s ease" }}
+              onMouseEnter={() => setHoveredGroup("Calves")}
+              onMouseLeave={() => setHoveredGroup(null)}
+            />
+          </g>
+        </svg>
+
+        {hoveredGroup && (
+          <div style={{ textAlign: "center", marginTop: 8, color: "#4ade80", fontSize: 13, fontWeight: 600 }}>
+            Highlighted: {hoveredGroup}
+          </div>
+        )}
       </div>
 
-      <svg
-        viewBox="0 0 200 420"
-        className="heatmap-svg"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {/* ── Body silhouettes ── */}
-        <path d={FRONT_BODY} fill="#141e18" stroke="#2a3d30" strokeWidth="1" />
-        <path d={BACK_BODY}  fill="#141e18" stroke="#2a3d30" strokeWidth="1" />
-        <path d={HEAD_FRONT} fill="#141e18" stroke="#2a3d30" strokeWidth="1" />
-        <path d={HEAD_BACK}  fill="#141e18" stroke="#2a3d30" strokeWidth="1" />
+      {/* ── Muscle Frequency Breakdown (Right Side) ── */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: "#ffffff", marginBottom: 4 }}>Weekly Muscle Activation</h3>
+          <p style={{ fontSize: 13, color: "#7a8580", margin: 0 }}>
+            Visualizes which muscle groups were stimulated based on your logged workouts this week.
+          </p>
+        </div>
 
-        {/* Front label */}
-        <text x="50" y="415" textAnchor="middle" fill="#4a6155" fontSize="8" fontFamily="Inter, sans-serif">FRONT</text>
-        {/* Back label */}
-        <text x="150" y="415" textAnchor="middle" fill="#4a6155" fontSize="8" fontFamily="Inter, sans-serif">BACK</text>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {CATEGORIES.map((cat) => {
+            const totalHits = cat.groups.reduce((sum, g) => sum + (muscleHits[g] || 0), 0);
+            const active = totalHits > 0;
+            const pct = Math.min(100, Math.round((totalHits / Math.max(1, maxHits * 2)) * 100));
 
-        {/* ── Muscle group heat regions ── */}
-        {muscleList.map((muscle) => {
-          const intensity = heatMap[muscle] ?? 0;
-          const color = heatColor(intensity);
-          const paths = MUSCLE_PATHS[muscle];
-
-          return (
-            <g key={muscle}>
-              {paths.front && (
-                <path
-                  d={paths.front}
-                  fill={color}
-                  className={intensity > 0 ? "heatmap-muscle active" : "heatmap-muscle"}
-                >
-                  <title>{paths.label ?? muscle} (front)</title>
-                </path>
-              )}
-              {paths.back && (
-                <path
-                  d={paths.back}
-                  fill={color}
-                  className={intensity > 0 ? "heatmap-muscle active" : "heatmap-muscle"}
-                >
-                  <title>{paths.label ?? muscle} (back)</title>
-                </path>
-              )}
-            </g>
-          );
-        })}
-      </svg>
-
-      {/* ── Legend ── */}
-      {activeMuscles.length > 0 ? (
-        <div className="heatmap-legend">
-          {activeMuscles.map((m) => {
-            const intensity = heatMap[m] ?? 0;
             return (
-              <div key={m} className="heatmap-legend-item">
-                <span
-                  className="heatmap-legend-dot"
-                  style={{ background: heatColor(intensity) }}
-                />
-                <span className="heatmap-legend-label">
-                  {MUSCLE_PATHS[m].label ?? m}
-                </span>
+              <div
+                key={cat.name}
+                style={{
+                  padding: "10px 14px",
+                  background: active ? "#101813" : "#0d120f",
+                  border: `1px solid ${active ? "#223d2b" : "#19221c"}`,
+                  borderRadius: 10,
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: active ? "#ffffff" : "#6a7570" }}>
+                    {cat.icon} {cat.name}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: active ? "#4ade80" : "#4a5550",
+                    }}
+                  >
+                    {totalHits === 0 ? "Not worked" : `${totalHits} session${totalHits > 1 ? "s" : ""} 🔥`}
+                  </span>
+                </div>
+                <div style={{ width: "100%", height: 6, background: "#17221b", borderRadius: 4, overflow: "hidden" }}>
+                  <div
+                    style={{
+                      width: `${active ? Math.max(15, pct) : 0}%`,
+                      height: "100%",
+                      background: active ? "linear-gradient(90deg, #15803d, #22c55e)" : "transparent",
+                      borderRadius: 4,
+                      transition: "width 0.4s ease",
+                    }}
+                  />
+                </div>
               </div>
             );
           })}
         </div>
-      ) : (
-        <p className="heatmap-empty">Log workouts this week to see your muscle heatmap light up.</p>
-      )}
-
-      <div className="heatmap-scale">
-        <span className="heatmap-scale-label">Low</span>
-        <div className="heatmap-scale-bar">
-          {[0.15, 0.3, 0.5, 0.7, 0.85, 1].map((v) => (
-            <div
-              key={v}
-              className="heatmap-scale-seg"
-              style={{ background: heatColor(v) }}
-            />
-          ))}
-        </div>
-        <span className="heatmap-scale-label">High</span>
       </div>
     </div>
   );

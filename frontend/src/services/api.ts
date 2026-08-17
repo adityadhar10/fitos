@@ -24,6 +24,13 @@ export const login = (email: string, password: string) =>
 
 export const getMe = () => api.get("/auth/me");
 
+export const updateGoals = (goals: {
+  calorieGoal?: number;
+  proteinGoal?: number;
+  carbGoal?: number;
+  fatGoal?: number;
+}) => api.put("/auth/goals", goals);
+
 // ---- Meals ----
 export const getMeals = () => api.get("/meals");
 export const addMeal = (
@@ -34,11 +41,15 @@ export const addMeal = (
   carbs?: number,
   fats?: number
 ) => api.post("/meals", { type, description, calories, protein, carbs, fats });
+export const deleteMeal = (id: string) => api.delete(`/meals/${id}`);
 
 // ---- Workouts ----
 export const getWorkouts = () => api.get("/workouts");
-export const addWorkout = (name: string, sets: { reps: number; weight: number }[]) =>
-  api.post("/workouts", { name, sets });
+export const addWorkout = (
+  name: string,
+  sets: { reps: number; weight: number }[],
+  muscleGroup?: string
+) => api.post("/workouts", { name, sets, muscleGroup });
 export const deleteWorkout = (id: string) => api.delete(`/workouts/${id}`);
 
 // ---- Weight ----

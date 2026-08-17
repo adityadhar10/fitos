@@ -20,24 +20,28 @@ const TEMPLATES = [
     icon: "🏋️",
     name: "Push Day",
     desc: "Chest · Shoulders · Triceps",
+    muscleGroup: "Chest, Shoulders, Triceps",
     exercises: ["Bench Press", "Overhead Press", "Tricep Pushdown", "Lateral Raise"],
   },
   {
     icon: "🦾",
     name: "Pull Day",
     desc: "Back · Biceps · Rear Delts",
+    muscleGroup: "Back, Biceps",
     exercises: ["Deadlift", "Pull-Ups", "Barbell Row", "Bicep Curl"],
   },
   {
     icon: "🦵",
     name: "Leg Day",
     desc: "Quads · Hamstrings · Calves",
+    muscleGroup: "Legs",
     exercises: ["Squat", "Romanian Deadlift", "Leg Press", "Calf Raise"],
   },
   {
     icon: "⚡",
     name: "Full Body",
     desc: "All muscle groups",
+    muscleGroup: "Full Body",
     exercises: ["Squat", "Bench Press", "Barbell Row", "Overhead Press"],
   },
 ];
@@ -52,6 +56,7 @@ export default function Workout() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const [name, setName] = useState("");
+  const [muscleGroup, setMuscleGroup] = useState("");
   const [setRows, setSetRows] = useState([{ reps: "", weight: "" }]);
 
   const loadWorkouts = () => {
@@ -86,8 +91,9 @@ export default function Workout() {
 
     setSaving(true);
     try {
-      await addWorkout(name, validSets);
+      await addWorkout(name, validSets, muscleGroup || undefined);
       setName("");
+      setMuscleGroup("");
       setSetRows([{ reps: "", weight: "" }]);
       setShowForm(false);
       setActiveTab("log");
@@ -114,6 +120,7 @@ export default function Workout() {
 
   const applyTemplate = (template: typeof TEMPLATES[0]) => {
     setName(template.name);
+    setMuscleGroup(template.muscleGroup || "");
     setSetRows(template.exercises.map(() => ({ reps: "3", weight: "0" })));
     setShowForm(true);
     setActiveTab("log");
@@ -192,6 +199,30 @@ export default function Workout() {
                   onChange={(e) => setName(e.target.value)}
                   required
                 />
+
+                <select
+                  value={muscleGroup}
+                  onChange={(e) => setMuscleGroup(e.target.value)}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 10,
+                    background: "#0f1511",
+                    border: "1px solid #252d28",
+                    color: muscleGroup ? "#ffffff" : "#7a8580",
+                    fontSize: 14,
+                    outline: "none",
+                    width: "100%",
+                  }}
+                >
+                  <option value="">🎯 Target Muscle Group (Auto-detect / Optional)</option>
+                  <option value="Chest">Chest</option>
+                  <option value="Back">Back / Lats</option>
+                  <option value="Shoulders">Shoulders</option>
+                  <option value="Arms">Arms (Biceps & Triceps)</option>
+                  <option value="Legs">Legs (Quads, Glutes & Hamstrings)</option>
+                  <option value="Core">Core / Abs</option>
+                  <option value="Full Body">Full Body</option>
+                </select>
 
                 {setRows.map((row, i) => (
                   <div key={i} className="set-row">

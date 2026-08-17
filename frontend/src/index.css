@@ -1461,6 +1461,40 @@ a {
   font-weight: 600;
 }
 
+.goals-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.goals-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.goals-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.goals-field input {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #0f1511;
+  border: 1px solid #252d28;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+}
+
+.goals-field input:focus {
+  border-color: #4ade80;
+}
+
 /* =========================================================
    INPUT STYLES (global reusable)
 ========================================================= */

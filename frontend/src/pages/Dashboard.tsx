@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import "../index.css";
 import { getMeals, getTodayMetrics, updateTodayMetrics, getWeeklyMetrics, getInsight, getStreak } from "../services/api";
 import { useAuth } from "../context/AuthContext";
-
-const CALORIE_GOAL = 2400;
-const PROTEIN_GOAL = 160;
-const STEP_GOAL = 10000;
-const SLEEP_GOAL = 8;
+import {
+  DEFAULT_CALORIE_GOAL,
+  DEFAULT_PROTEIN_GOAL,
+  DEFAULT_STEP_GOAL,
+  DEFAULT_SLEEP_GOAL,
+} from "../constants/goals";
 
 interface WeeklyPoint {
   day: string;
@@ -22,6 +23,9 @@ function getGreeting() {
 
 export default function Dashboard() {
   const { user } = useAuth();
+
+  const calorieGoal = user?.calorieGoal ?? DEFAULT_CALORIE_GOAL;
+  const proteinGoal = user?.proteinGoal ?? DEFAULT_PROTEIN_GOAL;
 
   const [totalCalories, setTotalCalories] = useState(0);
   const [totalProtein, setTotalProtein] = useState(0);
@@ -91,10 +95,10 @@ export default function Dashboard() {
     loadInsight();
   }, []);
 
-  const caloriesPct = Math.min(100, (totalCalories / CALORIE_GOAL) * 100);
-  const proteinPct = Math.min(100, (totalProtein / PROTEIN_GOAL) * 100);
-  const stepsPct = Math.min(100, (steps / STEP_GOAL) * 100);
-  const sleepPct = Math.min(100, (sleepHours / SLEEP_GOAL) * 100);
+  const caloriesPct = Math.min(100, (totalCalories / calorieGoal) * 100);
+  const proteinPct = Math.min(100, (totalProtein / proteinGoal) * 100);
+  const stepsPct = Math.min(100, (steps / DEFAULT_STEP_GOAL) * 100);
+  const sleepPct = Math.min(100, (sleepHours / DEFAULT_SLEEP_GOAL) * 100);
 
   // Consistency score: how many of last 7 days had steps > 0
   const activeDaysCount = weekly.filter((w) => w.steps > 0).length;
@@ -132,7 +136,7 @@ export default function Dashboard() {
       icon: "🔥",
       label: "Calories",
       value: totalCalories.toLocaleString(),
-      target: `/ ${CALORIE_GOAL.toLocaleString()} kcal`,
+      target: `/ ${calorieGoal.toLocaleString()} kcal`,
       pct: caloriesPct,
     },
     {
@@ -140,7 +144,7 @@ export default function Dashboard() {
       icon: "🥩",
       label: "Protein",
       value: `${totalProtein}g`,
-      target: `/ ${PROTEIN_GOAL}g`,
+      target: `/ ${proteinGoal}g`,
       pct: proteinPct,
     },
     {
@@ -148,7 +152,7 @@ export default function Dashboard() {
       icon: "🏃",
       label: "Steps",
       value: steps.toLocaleString(),
-      target: `/ ${STEP_GOAL.toLocaleString()}`,
+      target: `/ ${DEFAULT_STEP_GOAL.toLocaleString()}`,
       pct: stepsPct,
     },
     {
@@ -156,7 +160,7 @@ export default function Dashboard() {
       icon: "😴",
       label: "Sleep",
       value: `${sleepHours}h`,
-      target: `/ ${SLEEP_GOAL}h`,
+      target: `/ ${DEFAULT_SLEEP_GOAL}h`,
       pct: sleepPct,
     },
   ];

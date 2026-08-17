@@ -22,13 +22,15 @@ export const BADGE_DEFS: BadgeDef[] = [
   { id: 'protein_king',    emoji: '🥩', name: 'Protein King',     description: 'Logged 5 meals with ≥ 30g protein each' },
   { id: 'step_master',     emoji: '🚶', name: 'Step Master',      description: 'Logged 10,000+ steps in a single day' },
   { id: 'weight_tracker',  emoji: '📉', name: 'Weight Tracker',   description: 'Logged weight 5+ times' },
+  { id: 'goal_crusher',    emoji: '🎯', name: 'Goal Crusher',     description: 'Hit your daily calorie goal in a single day' },
 ];
 
 // ── Helper: compute which badges the user has earned ─────────────────────────
 async function computeEarnedBadges(userId: string): Promise<string[]> {
   const earned: string[] = [];
 
-  const [workouts, meals, weightEntries, metrics, streak] = await Promise.all([
+  const [user, workouts, meals, weightEntries, metrics, streak] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId } }),
     prisma.workout.findMany({ where: { userId }, orderBy: { date: 'asc' } }),
     prisma.meal.findMany({ where: { userId } }),
     prisma.weightEntry.findMany({ where: { userId } }),
@@ -64,6 +66,17 @@ async function computeEarnedBadges(userId: string): Promise<string[]> {
 
   // weight_tracker — 5+ weigh-ins
   if (weightEntries.length >= 5) earned.push('weight_tracker');
+
+  // goal_crusher — any day where total calories >= user's calorie goal
+  if (user) {
+    const caloriesByDay = new Map<string, number>();
+    for (const meal of meals) {
+      const day = new Date(meal.createdAt).toDateString();
+      caloriesByDay.set(day, (caloriesByDay.get(day) ?? 0) + meal.calories);
+    }
+    const hitGoalDay = [...caloriesByDay.values()].some((total) => total >= user.calorieGoal);
+    if (hitGoalDay) earned.push('goal_crusher');
+  }
 
   return earned;
 }

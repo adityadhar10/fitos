@@ -55,9 +55,29 @@ ${weightTrend}
 
 Write the insight now:`;
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
-    const result = await model.generateContent(prompt);
-    const insight = result.response.text().trim();
+    let insight = '';
+    try {
+      const model = genAI.getGenerativeModel({ model: 'gemini-3.7-flash' });
+      const result = await model.generateContent(prompt);
+      insight = result.response.text().trim();
+    } catch (apiErr) {
+      try {
+        const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
+        const result = await model.generateContent(prompt);
+        insight = result.response.text().trim();
+      } catch (fallbackErr) {
+        console.warn('Gemini quota reached, using personalized rule-based coach insight.');
+        const remainingCal = Math.max(0, user.calorieGoal - totalCalories);
+        const remainingProt = Math.max(0, user.proteinGoal - totalProtein);
+        if (totalCalories === 0 && steps === 0) {
+          insight = `Great start to the day, ${user.name}! Ready to fuel up with your first meal and hit your ${user.calorieGoal} kcal target? Let's crush today's goals.`;
+        } else if (remainingCal > 0) {
+          insight = `Solid effort today, ${user.name}! You're at ${totalCalories} / ${user.calorieGoal} kcal with ${remainingProt}g protein left to reach your daily target. Keep up the momentum!`;
+        } else {
+          insight = `Outstanding discipline, ${user.name}! You've reached your daily calorie goal and logged ${steps} steps. Fantastic consistency today!`;
+        }
+      }
+    }
 
     res.json({ insight });
   } catch (error) {

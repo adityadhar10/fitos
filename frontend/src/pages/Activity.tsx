@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import "../index.css";
 import { getTodayMetrics, updateTodayMetrics } from "../services/api";
-
-const STEP_GOAL = 10000;
-const SLEEP_GOAL = 8;
+import AutoStepTracker from "../components/AutoStepTracker";
+import { DEFAULT_STEP_GOAL, DEFAULT_SLEEP_GOAL } from "../constants/goals";
 
 export default function Activity() {
   const [steps, setSteps] = useState(0);
@@ -35,8 +34,8 @@ export default function Activity() {
   const minutes = activeMinutes % 60;
   const activeTimeLabel = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 
-  const stepsPct = Math.min(100, Math.round((steps / STEP_GOAL) * 100));
-  const sleepPct = Math.min(100, Math.round((sleepHours / SLEEP_GOAL) * 100));
+  const stepsPct = Math.min(100, Math.round((steps / DEFAULT_STEP_GOAL) * 100));
+  const sleepPct = Math.min(100, Math.round((sleepHours / DEFAULT_SLEEP_GOAL) * 100));
 
   const circumference = 2 * Math.PI * 52; // r=52
   const stepsOffset = circumference - (stepsPct / 100) * circumference;
@@ -70,8 +69,16 @@ export default function Activity() {
     <div className="page-container page-enter">
       <div className="page-header">
         <h1>Activity ⚡</h1>
-        <p>Track your daily movement, steps and sleep.</p>
+        <p>Real-time movement detection, automatic step counter, and sleep tracker.</p>
       </div>
+
+      {/* ── Real-Time Auto Step Sensor Tracker ── */}
+      {!loading && (
+        <AutoStepTracker
+          initialSteps={steps}
+          onStepsChange={(newSteps) => setSteps(newSteps)}
+        />
+      )}
 
       {/* ── Ring cards ── */}
       <div className="activity-rings-row">
@@ -91,7 +98,7 @@ export default function Activity() {
             </svg>
             <div className="activity-ring-inner">
               <strong>{loading ? "–" : steps.toLocaleString()}</strong>
-              <span>/ {STEP_GOAL.toLocaleString()}</span>
+              <span>/ {DEFAULT_STEP_GOAL.toLocaleString()}</span>
             </div>
           </div>
           <p className="activity-ring-pct">{loading ? "" : `${stepsPct}%`}</p>
@@ -113,7 +120,7 @@ export default function Activity() {
             </svg>
             <div className="activity-ring-inner">
               <strong>{loading ? "–" : `${sleepHours}h`}</strong>
-              <span>/ {SLEEP_GOAL}h</span>
+              <span>/ {DEFAULT_SLEEP_GOAL}h</span>
             </div>
           </div>
           <p className="activity-ring-pct">{loading ? "" : `${sleepPct}%`}</p>

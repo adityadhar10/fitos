@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import "../index.css";
-import { getWeightHistory, addWeightEntry, getWorkouts } from "../services/api";
+import {
+  getWeightHistory,
+  addWeightEntry,
+  getWorkouts,
+  exportWorkoutCSV,
+  exportNutritionCSV,
+  exportWeightCSV,
+} from "../services/api";
 import WeightChart from "../components/WeightChart";
 import MuscleHeatmap from "../components/MuscleHeatmap";
 
@@ -13,6 +20,7 @@ interface WeightEntry {
 interface WorkoutItem {
   id: string;
   name: string;
+  muscleGroup?: string | null;
   date: string;
 }
 
@@ -208,6 +216,40 @@ export default function Progress() {
                 <strong className="history-weight">{entry.weight}kg</strong>
               </div>
             ))}
+        </div>
+      </div>
+
+      {/* ── Export Data (Phase 7) ── */}
+      <div className="section-card">
+        <div className="section-header">
+          <h2>📥 Export Your Fitness Data</h2>
+          <span className="subtext" style={{ marginTop: 0 }}>Download CSV reports</span>
+        </div>
+        <p className="subtext" style={{ marginBottom: 16 }}>
+          Take your data anywhere. Export complete logs for spreadsheet analysis, coaching reviews, or backups.
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+          <button
+            className="tab-btn active"
+            style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 10, cursor: "pointer" }}
+            onClick={() => exportWorkoutCSV().catch((err) => alert("Failed to export: " + err.message))}
+          >
+            <span>🏋️</span> Workouts CSV
+          </button>
+          <button
+            className="tab-btn active"
+            style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 10, cursor: "pointer" }}
+            onClick={() => exportNutritionCSV().catch((err) => alert("Failed to export: " + err.message))}
+          >
+            <span>🥗</span> Nutrition CSV
+          </button>
+          <button
+            className="tab-btn active"
+            style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 10, cursor: "pointer" }}
+            onClick={() => exportWeightCSV().catch((err) => alert("Failed to export: " + err.message))}
+          >
+            <span>⚖️</span> Weight Log CSV
+          </button>
         </div>
       </div>
     </div>

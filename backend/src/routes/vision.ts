@@ -17,7 +17,6 @@ const analyzeSchema = z.object({
 router.post('/analyze', requireAuth, validate(analyzeSchema), async (req: AuthRequest, res: Response) => {
   try {
     const { imageBase64, mimeType } = req.body;
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
     const prompt = `You are a precise nutrition analysis AI. Analyze this food photo and respond ONLY with a valid JSON object — no markdown, no explanation, just raw JSON.
 
 The JSON must have exactly these fields:
@@ -33,17 +32,24 @@ The JSON must have exactly these fields:
 
 Be as accurate as possible. If you cannot identify the food, use reasonable defaults for an average meal.`;
 
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          mimeType,
-          data: imageBase64,
-        },
+    let raw = '';
+    const imagePart = {
+      inlineData: {
+        mimeType,
+        data: imageBase64,
       },
-    ]);
+    };
 
-    const raw = result.response.text().trim();
+    try {
+      const model = genAI.getGenerativeModel({ model: 'gemini-3.7-flash' });
+      const result = await model.generateContent([prompt, imagePart]);
+      raw = result.response.text().trim();
+    } catch (apiErr) {
+      console.warn('Gemini 3.7 flash vision fallback to 3.5:', apiErr);
+      const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
+      const result = await model.generateContent([prompt, imagePart]);
+      raw = result.response.text().trim();
+    }
 
     // Strip markdown code fences if present
     const jsonStr = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();

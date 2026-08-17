@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import '../index.css';
 import { useAuth } from '../context/AuthContext';
 import { exportWorkoutCSV, exportNutritionCSV, exportWeightCSV } from '../services/api';
+import { DEFAULT_STEP_GOAL } from '../constants/goals';
 
 interface ExportButton {
   id: string;
@@ -12,9 +13,45 @@ interface ExportButton {
 }
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, updateGoals } = useAuth();
   const [exporting, setExporting] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
+
+  const [calorieGoal, setCalorieGoal] = useState('');
+  const [proteinGoal, setProteinGoal] = useState('');
+  const [carbGoal, setCarbGoal] = useState('');
+  const [fatGoal, setFatGoal] = useState('');
+  const [savingGoals, setSavingGoals] = useState(false);
+  const [goalsMessage, setGoalsMessage] = useState<string | null>(null);
+  const [goalsError, setGoalsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    setCalorieGoal(String(user.calorieGoal));
+    setProteinGoal(String(user.proteinGoal));
+    setCarbGoal(String(user.carbGoal));
+    setFatGoal(String(user.fatGoal));
+  }, [user]);
+
+  const handleSaveGoals = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingGoals(true);
+    setGoalsMessage(null);
+    setGoalsError(null);
+    try {
+      await updateGoals({
+        calorieGoal: Number(calorieGoal),
+        proteinGoal: Number(proteinGoal),
+        carbGoal: Number(carbGoal),
+        fatGoal: Number(fatGoal),
+      });
+      setGoalsMessage('Nutrition goals updated.');
+    } catch {
+      setGoalsError('Could not save goals. Check that all values are positive numbers.');
+    } finally {
+      setSavingGoals(false);
+    }
+  };
 
   const EXPORT_BUTTONS: ExportButton[] = [
     {
@@ -77,9 +114,72 @@ export default function Settings() {
           </div>
           <div className="settings-item">
             <span className="label"><span className="icon">👟</span> Daily Step Goal</span>
-            <span className="value">10,000</span>
+            <span className="value">{DEFAULT_STEP_GOAL.toLocaleString()}</span>
           </div>
         </div>
+      </div>
+
+      {/* ── NUTRITION GOALS ── */}
+      <div className="section-card">
+        <h2 className="section-title">Nutrition Goals</h2>
+        <p className="subtext" style={{ marginBottom: 16 }}>
+          Customize your daily calorie and macro targets. Dashboard and Nutrition pages use these values.
+        </p>
+
+        {goalsError && (
+          <div className="export-error-banner">⚠️ {goalsError}</div>
+        )}
+        {goalsMessage && (
+          <div style={{ color: '#4ade80', fontSize: 14, marginBottom: 12 }}>✓ {goalsMessage}</div>
+        )}
+
+        <form onSubmit={handleSaveGoals} className="goals-form">
+          <div className="goals-form-grid">
+            <label className="goals-field">
+              <span>Calories (kcal)</span>
+              <input
+                type="number"
+                min={1}
+                value={calorieGoal}
+                onChange={(e) => setCalorieGoal(e.target.value)}
+                required
+              />
+            </label>
+            <label className="goals-field">
+              <span>Protein (g)</span>
+              <input
+                type="number"
+                min={1}
+                value={proteinGoal}
+                onChange={(e) => setProteinGoal(e.target.value)}
+                required
+              />
+            </label>
+            <label className="goals-field">
+              <span>Carbs (g)</span>
+              <input
+                type="number"
+                min={1}
+                value={carbGoal}
+                onChange={(e) => setCarbGoal(e.target.value)}
+                required
+              />
+            </label>
+            <label className="goals-field">
+              <span>Fats (g)</span>
+              <input
+                type="number"
+                min={1}
+                value={fatGoal}
+                onChange={(e) => setFatGoal(e.target.value)}
+                required
+              />
+            </label>
+          </div>
+          <button className="primary-button" type="submit" disabled={savingGoals}>
+            {savingGoals ? 'Saving…' : 'Save Goals'}
+          </button>
+        </form>
       </div>
 
       {/* ── PREFERENCES ── */}
