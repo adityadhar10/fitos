@@ -7,6 +7,20 @@ import { validate } from '../middleware/validate.js';
 const router = Router();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
+// Simple rate limiter to prevent hitting Gemini API quota
+const visionRateLimiter = {
+  lastCall: 0,
+  minInterval: 60000, // 1 minute between API calls
+  isRateLimited(): boolean {
+    const now = Date.now();
+    if (now - this.lastCall < this.minInterval) {
+      return true;
+    }
+    this.lastCall = now;
+    return false;
+  }
+};
+
 // ── Zod schema ───────────────────────────────────────────────────────────────
 const analyzeSchema = z.object({
   imageBase64: z.string().min(100, 'Image data is required'),
@@ -17,6 +31,15 @@ const analyzeSchema = z.object({
 router.post('/analyze', requireAuth, validate(analyzeSchema), async (req: AuthRequest, res: Response) => {
   try {
     const { imageBase64, mimeType } = req.body;
+
+    // Check rate limit before attempting API call
+    if (visionRateLimiter.isRateLimited()) {
+      return res.status(429).json({ 
+        error: 'Rate limit exceeded. Please wait 1 minute between AI scans.',
+        retryAfter: 60
+      });
+    }
+
     const prompt = `You are a precise nutrition analysis AI. Analyze this food photo and respond ONLY with a valid JSON object — no markdown, no explanation, just raw JSON.
 
 The JSON must have exactly these fields:
@@ -41,12 +64,12 @@ Be as accurate as possible. If you cannot identify the food, use reasonable defa
     };
 
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-3.7-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       const result = await model.generateContent([prompt, imagePart]);
       raw = result.response.text().trim();
-    } catch (apiErr) {
-      console.warn('Gemini 3.7 flash vision fallback to 3.5:', apiErr);
-      const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
+    } catch (apiErr: any) {
+      console.warn('Gemini 1.5 flash vision fallback to 1.5 pro:', apiErr);
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
       const result = await model.generateContent([prompt, imagePart]);
       raw = result.response.text().trim();
     }
