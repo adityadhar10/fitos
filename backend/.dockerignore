@@ -15,3 +15,4 @@ README.md
 .windsurf
 generated
 server.log
+.Dockerfile
