@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -23,18 +22,17 @@ model User {
   weightLogs   WeightEntry[]
   dailyMetrics DailyMetric[]
   badges       UserBadge[]
-} 
+}
 
 model UserBadge {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badgeId   String   // e.g. "first_workout", "7_day_streak"
-  earnedAt  DateTime @default(now())
+  id       String   @id @default(uuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId  String
+  earnedAt DateTime @default(now())
 
   @@unique([userId, badgeId])
 }
-
 
 model Meal {
   id          String   @id @default(uuid())
@@ -48,6 +46,7 @@ model Meal {
   fats        Int      @default(0)
   createdAt   DateTime @default(now())
 }
+
 model Workout {
   id          String   @id @default(uuid())
   userId      String
@@ -67,20 +66,20 @@ model Set {
 }
 
 model WeightEntry {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  weight    Float
-  date      DateTime @default(now())
+  id     String   @id @default(uuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weight Float
+  date   DateTime @default(now())
 }
+
 model DailyMetric {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date      DateTime @default(now())
-  steps     Int      @default(0)
-  sleepHours Float   @default(0)
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date       DateTime @default(now())
+  steps      Int      @default(0)
+  sleepHours Float    @default(0)
 
   @@unique([userId, date])
 }
-
