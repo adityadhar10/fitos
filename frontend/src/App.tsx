@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, NavLink, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuth } from "./context/AuthContext";
+import { APP_VERSION } from "./constants/version";
 
 import Dashboard from "./pages/Dashboard";
 import Nutrition from "./pages/Nutrition";
@@ -58,6 +59,7 @@ function AppShell() {
       <aside className="sidebar">
         <div className="sidebar-logo">
           <h2>FitOS</h2>
+          <span className="sidebar-version">v{APP_VERSION}</span>
         </div>
 
         <nav>

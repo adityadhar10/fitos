@@ -8,6 +8,8 @@ import {
   DEFAULT_STEP_GOAL,
   DEFAULT_SLEEP_GOAL,
 } from "../constants/goals";
+import QuickActions from "../components/QuickActions";
+import TodayFocus from "../components/TodayFocus";
 
 interface WeeklyPoint {
   day: string;
@@ -178,8 +180,22 @@ export default function Dashboard() {
         <h1>
           {getGreeting()}{user?.name ? `, ${user.name.split(" ")[0]}` : ""} 👋
         </h1>
-        <p>Here's your fitness overview for today.</p>
+        <p>Your daily command center — score, goals, and what to do next.</p>
       </div>
+
+      <TodayFocus
+        totalCalories={totalCalories}
+        calorieGoal={calorieGoal}
+        totalProtein={totalProtein}
+        proteinGoal={proteinGoal}
+        steps={steps}
+        stepGoal={DEFAULT_STEP_GOAL}
+        sleepHours={sleepHours}
+        sleepGoal={DEFAULT_SLEEP_GOAL}
+        loading={loading}
+      />
+
+      <QuickActions />
 
       {/* Fitness Score + breakdown */}
       <div className="fitness-score">

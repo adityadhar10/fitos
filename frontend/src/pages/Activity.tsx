@@ -60,6 +60,8 @@ export default function Activity() {
     }
   };
 
+  const recoveryScore = Math.round((stepsPct + sleepPct) / 2);
+
   const ACTIVITY_STATS = [
     { id: "calories", icon: "🔥", label: "Calories Burned", value: `${caloriesBurned} kcal` },
     { id: "time",     icon: "⏱️", label: "Active Time",     value: activeTimeLabel },
@@ -78,6 +80,23 @@ export default function Activity() {
           initialSteps={steps}
           onStepsChange={(newSteps) => setSteps(newSteps)}
         />
+      )}
+
+      {/* ── Recovery score ── */}
+      {!loading && (
+        <div className="recovery-score-card">
+          <div>
+            <h2>Recovery Score</h2>
+            <p>Based on movement and sleep today</p>
+          </div>
+          <div className="recovery-score-value">
+            <strong>{recoveryScore}</strong>
+            <span>/ 100</span>
+          </div>
+          <div className="recovery-score-bar">
+            <div className="recovery-score-fill" style={{ width: `${recoveryScore}%` }} />
+          </div>
+        </div>
       )}
 
       {/* ── Ring cards ── */}

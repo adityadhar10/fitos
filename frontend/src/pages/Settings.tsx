@@ -3,6 +3,7 @@ import '../index.css';
 import { useAuth } from '../context/AuthContext';
 import { exportWorkoutCSV, exportNutritionCSV, exportWeightCSV } from '../services/api';
 import { DEFAULT_STEP_GOAL } from '../constants/goals';
+import { APP_VERSION } from '../constants/version';
 
 interface ExportButton {
   id: string;
@@ -245,11 +246,11 @@ export default function Settings() {
         <div className="settings-list">
           <div className="settings-item">
             <span className="label"><span className="icon">🚀</span> Version</span>
-            <span className="value">v2.0.0</span>
+            <span className="value">v{APP_VERSION}</span>
           </div>
           <div className="settings-item">
             <span className="label"><span className="icon">🤖</span> AI Engine</span>
-            <span className="value">Gemini 2.0 Flash</span>
+            <span className="value">Gemini 3.7 Flash</span>
           </div>
           <div className="settings-item">
             <span className="label"><span className="icon">⚡</span> Stack</span>

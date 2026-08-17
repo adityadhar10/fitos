@@ -26,7 +26,6 @@ jobs:
   deploy-frontend:
     name: Deploy Frontend → Vercel
     runs-on: ubuntu-latest
-    needs: deploy-backend   # ensures backend is live before frontend deploys
 
     steps:
       - uses: actions/checkout@v4
