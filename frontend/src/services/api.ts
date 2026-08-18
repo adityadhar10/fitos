@@ -94,3 +94,6 @@ async function downloadExport(path: string, filename: string) {
 export const exportWorkoutCSV    = () => downloadExport('/export/csv',           'fitos-workouts.csv');
 export const exportNutritionCSV  = () => downloadExport('/export/nutrition-csv', 'fitos-nutrition.csv');
 export const exportWeightCSV     = () => downloadExport('/export/weight-csv',    'fitos-weight.csv');
+// ---- Text-based nutrition estimation ----
+export const estimateNutritionFromText = (description: string) =>
+  api.post('/vision/estimate-text', { description });

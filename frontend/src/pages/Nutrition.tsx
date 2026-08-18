@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import "../index.css";
-import { getMeals, addMeal, deleteMeal, getInsight } from "../services/api";
+import { getMeals, addMeal, deleteMeal, getInsight, estimateNutritionFromText } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import FoodSearch from "../components/FoodSearch";
 import FoodPhotoScan from "../components/FoodPhotoScan";
@@ -35,6 +35,7 @@ export default function Nutrition() {
   const [scanMode, setScanMode] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [estimating, setEstimating] = useState(false);
 
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [insightLoading, setInsightLoading] = useState(true);
@@ -79,6 +80,23 @@ export default function Nutrition() {
 
   const remainingCalories = Math.max(0, calorieGoal - totalCalories);
   const remainingProtein = Math.max(0, proteinGoal - totalProtein);
+
+  const handleEstimate = async () => {
+    if (!description.trim()) return;
+    setEstimating(true);
+    try {
+      const res = await estimateNutritionFromText(description);
+      const est = res.data.estimate;
+      setCalories(String(est.calories));
+      setProtein(String(est.protein));
+      setCarbs(String(est.carbs));
+      setFats(String(est.fats));
+    } catch (err) {
+      console.error("Failed to estimate nutrition:", err);
+    } finally {
+      setEstimating(false);
+    }
+  };
 
   const handleAddMeal = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -341,6 +359,29 @@ export default function Nutrition() {
               />
             </div>
 
+            <button
+              type="button"
+              onClick={handleEstimate}
+              disabled={!description.trim() || estimating}
+              style={{
+                background: "#163a24",
+                border: "1px solid #2d4535",
+                color: "#4ade80",
+                padding: "9px 14px",
+                borderRadius: 10,
+                cursor: description.trim() ? "pointer" : "not-allowed",
+                fontWeight: 600,
+                fontSize: 13,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                opacity: description.trim() ? 1 : 0.5,
+              }}
+            >
+              {estimating ? "🤖 Estimating..." : "✨ Estimate calories & macros with AI"}
+            </button>
+
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
               <div>
                 <label style={{ fontSize: 11, color: "#7a8580", display: "block", marginBottom: 4 }}>Calories (kcal)*</label>
@@ -503,7 +544,6 @@ export default function Nutrition() {
                         {meal.description}
                       </h3>
                     </div>
-                    {/* Macro pills */}
                     <div style={{ display: "flex", gap: 6, marginTop: 5, flexWrap: "wrap" }}>
                       <span style={{ fontSize: 11, color: "#9da69f", background: "#131b16", padding: "2px 6px", borderRadius: 4, display: "flex", alignItems: "center", gap: 4 }}>
                         <span style={{ color: "#4ade80" }}>●</span> P: {meal.protein}g
