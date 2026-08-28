@@ -86,7 +86,7 @@ Write the insight now:`;
     } else {
       try {
         const result = await genAI.models.generateContent({
-          model: 'gemini-3.6-flash',
+          model: 'gemini-3.5-flash-lite',
           contents: prompt,
         });
         insight = (result.text || '').trim();
@@ -97,7 +97,7 @@ Write the insight now:`;
         
         try {
           const result = await genAI.models.generateContent({
-            model: 'gemini-3.6-flash',
+            model: 'gemini-3.5-flash-lite',
             contents: prompt,
           });
           insight = (result.text || '').trim();

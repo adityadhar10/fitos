@@ -137,7 +137,7 @@ If you cannot identify the food perfectly, make your best reasonable estimate.
         // IMPORTANT:
         // Use a current multimodal Gemini model.
         const result = await genAI.models.generateContent({
-          model: 'gemini-3.6-flash',
+          model: 'gemini-3.5-flash-lite',
           contents: [
             {
               role: 'user',
@@ -367,7 +367,7 @@ Be realistic about portion sizes.
 
       try {
         const result = await genAI.models.generateContent({
-          model: 'gemini-3.6-flash',
+          model: 'gemini-3.5-flash-lite',
           contents: [
             {
               role: 'user',

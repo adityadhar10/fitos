@@ -128,7 +128,7 @@ ${recentWorkoutsSummary}
         }));
 
         const chat = genAI.chats.create({
-          model: 'gemini-3.6-flash',
+          model: 'gemini-3.5-flash-lite',
           history: formattedHistory,
           config: { systemInstruction: systemPrompt },
         });

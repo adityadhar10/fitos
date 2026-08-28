@@ -150,7 +150,7 @@ You MUST respond strictly with a valid JSON object matching this exact schema (n
     if (process.env.GEMINI_API_KEY) {
       try {
         const result = await genAI.models.generateContent({
-          model: 'gemini-3.6-flash',
+          model: 'gemini-3.5-flash-lite',
           contents: prompt,
         });
         const rawText = (result.text || '').trim();
