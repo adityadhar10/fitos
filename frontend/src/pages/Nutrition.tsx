@@ -11,7 +11,7 @@ import {
   DEFAULT_CARB_GOAL,
   DEFAULT_FAT_GOAL,
 } from "../constants/goals";
-import { Camera, X, Sparkles, Check, Utensils, Bot, Trash2 } from "lucide-react";
+import { Camera, X, Sparkles, Utensils, Bot, Trash2 } from "lucide-react";
 
 interface Meal {
   id: string;

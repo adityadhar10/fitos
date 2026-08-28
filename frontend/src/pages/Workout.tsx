@@ -189,14 +189,6 @@ export default function Workout() {
     }
   };
 
-  const applyTemplate = (template: typeof TEMPLATES[0]) => {
-    setName(template.name);
-    setMuscleGroup(template.muscleGroup || "");
-    setSetRows(template.exercises.map(() => ({ reps: "3", weight: "0" })));
-    setShowForm(true);
-    setActiveTab("log");
-  };
-
   const handleStartCustomWorkout = (workoutData: { name: string; muscleGroup: string; exercises: string[] }) => {
     setName(workoutData.name);
     setMuscleGroup(workoutData.muscleGroup || "");
@@ -429,6 +421,49 @@ export default function Workout() {
 
         {activeTab === "log" && (
           <>
+            {!showForm && (
+              <div style={{ marginBottom: 20 }}>
+                <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>Quick Start Templates</h2>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
+                  {TEMPLATES.map((template) => {
+                    const Icon = template.icon;
+                    return (
+                      <button
+                        key={template.name}
+                        type="button"
+                        onClick={() =>
+                          handleStartCustomWorkout({
+                            name: template.name,
+                            muscleGroup: template.muscleGroup,
+                            exercises: template.exercises,
+                          })
+                        }
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "flex-start",
+                          gap: 6,
+                          padding: "12px 14px",
+                          background: "#0d1310",
+                          border: "1px solid #1f2b23",
+                          borderRadius: 12,
+                          cursor: "pointer",
+                          textAlign: "left",
+                          transition: "border-color 0.15s ease",
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#4ade80")}
+                        onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1f2b23")}
+                      >
+                        <Icon size={18} color="#4ade80" />
+                        <strong style={{ fontSize: 13, color: "#ffffff" }}>{template.name}</strong>
+                        <span style={{ fontSize: 11, color: "#8a968f" }}>{template.desc}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="section-header" style={{ marginTop: 0 }}>
               <h2>Recent Workouts</h2>
               <button
