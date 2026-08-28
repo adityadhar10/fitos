@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import "../index.css";
-import { getWorkouts, addWorkout, deleteWorkout, getWorkoutPRs, getRoutineTemplates } from "../services/api";
+import { getWorkouts, addWorkout, deleteWorkout, getWorkoutPRs, getWorkoutSuggestions, getRoutineTemplates } from "../services/api";
 import RestTimer from "../components/RestTimer";
 import PRCelebrationModal from "../components/PRCelebrationModal";
 import RoutineGeneratorModal from "../components/RoutineGeneratorModal";
@@ -15,6 +15,7 @@ import {
   Play,
   X,
   Calculator,
+  TrendingUp,
 } from "lucide-react";
 
 interface WorkoutSet {
@@ -44,6 +45,16 @@ interface MuscleRecoveryItem {
   score: number;
   hoursAgo: number | null;
   label: string;
+}
+
+interface WorkoutSuggestion {
+  exercise: string;
+  lastSessionDate: string;
+  lastTopWeight: number;
+  lastAvgReps: number;
+  suggestedWeight: number;
+  suggestedReps: number;
+  recommendation: string;
 }
 
 interface RoutineTemplate {
@@ -98,6 +109,7 @@ export default function Workout() {
   const [workouts, setWorkouts] = useState<WorkoutItem[]>([]);
   const [prs, setPrs] = useState<PRItem[]>([]);
   const [muscleRecovery, setMuscleRecovery] = useState<MuscleRecoveryItem[]>([]);
+  const [suggestions, setSuggestions] = useState<WorkoutSuggestion[]>([]);
   const [celebrationPR, setCelebrationPR] = useState<{ exerciseName: string; weight: number; reps: number } | null>(null);
 
   const [loading, setLoading] = useState(true);
@@ -115,12 +127,13 @@ export default function Workout() {
 
   const loadData = () => {
     setLoading(true);
-    Promise.all([getWorkouts(), getWorkoutPRs(), getRoutineTemplates()])
-      .then(([workoutsRes, prsRes, routinesRes]) => {
+    Promise.all([getWorkouts(), getWorkoutPRs(), getRoutineTemplates(), getWorkoutSuggestions()])
+      .then(([workoutsRes, prsRes, routinesRes, suggestionsRes]) => {
         setWorkouts(workoutsRes.data.workouts);
         setPrs(prsRes.data.prs || []);
         setMuscleRecovery(prsRes.data.muscleRecovery || []);
         setRoutineTemplates(routinesRes.data.routines || []);
+        setSuggestions(suggestionsRes.data.suggestions || []);
       })
       .catch((err) => console.error("Failed to load workouts & PRs:", err))
       .finally(() => setLoading(false));
@@ -254,6 +267,43 @@ export default function Workout() {
                 <span style={{ fontSize: 11, color: "#8a968f" }}>
                   {m.hoursAgo !== null ? `${m.hoursAgo}h ago` : "Ready to train"}
                 </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {suggestions.length > 0 && (
+        <div className="section-card" style={{ marginBottom: 16 }}>
+          <div className="section-header" style={{ marginBottom: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <TrendingUp size={18} color="#4ade80" />
+              <div>
+                <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>Progressive Overload Suggestions</h2>
+                <p className="subtext" style={{ margin: 0, fontSize: 12 }}>
+                  Data-driven targets for your next session, based on your last workout per exercise
+                </p>
+              </div>
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {suggestions.slice(0, 5).map((s) => (
+              <div
+                key={s.exercise}
+                style={{
+                  background: "#0e1510",
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  border: "1px solid #203527",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                  <strong style={{ fontSize: 13, color: "#ffffff" }}>{s.exercise}</strong>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#4ade80" }}>
+                    {s.suggestedWeight}kg × {s.suggestedReps}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: 12, color: "#9da69f", lineHeight: 1.5 }}>{s.recommendation}</p>
               </div>
             ))}
           </div>

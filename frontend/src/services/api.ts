@@ -52,6 +52,7 @@ export const addWorkout = (
 ) => api.post("/workouts", { name, sets, muscleGroup });
 export const deleteWorkout = (id: string) => api.delete(`/workouts/${id}`);
 export const getWorkoutPRs = () => api.get("/workouts/prs");
+export const getWorkoutSuggestions = () => api.get("/workouts/suggestions");
 
 // ---- Weight ----
 export const getWeightHistory = () => api.get("/weight");

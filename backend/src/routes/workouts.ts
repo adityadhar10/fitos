@@ -114,6 +114,78 @@ router.get('/prs', requireAuth, async (req: AuthRequest, res: Response) => {
   }
 });
 
+// ── GET /api/workouts/suggestions ─────────────────────────────────────────────
+// Progressive overload suggestions: for each exercise, analyze the most recent
+// session and recommend a specific target for the next session.
+router.get('/suggestions', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const workouts = await prisma.workout.findMany({
+      where: { userId: req.userId },
+      include: { sets: true },
+      orderBy: { date: 'desc' },
+    });
+
+    const latestByExercise = new Map<string, typeof workouts[0]>();
+    for (const w of workouts) {
+      const key = w.name.trim().toLowerCase();
+      if (!latestByExercise.has(key)) {
+        latestByExercise.set(key, w);
+      }
+    }
+
+    const TARGET_REPS_TOP = 10;
+    const TARGET_REPS_BOTTOM = 6;
+    const WEIGHT_INCREMENT_PCT = 0.025; // ~2.5%
+
+    const suggestions = Array.from(latestByExercise.values())
+      .filter((w) => w.sets.length > 0)
+      .map((w) => {
+        const avgReps =
+          w.sets.reduce((sum, s) => sum + s.reps, 0) / w.sets.length;
+        const topWeight = Math.max(...w.sets.map((s) => s.weight));
+        const lastSetAtTopWeight = w.sets
+          .filter((s) => s.weight === topWeight)
+          .sort((a, b) => b.reps - a.reps)[0];
+
+        let recommendation: string;
+        let suggestedWeight = topWeight;
+        let suggestedReps = lastSetAtTopWeight.reps;
+
+        if (avgReps >= TARGET_REPS_TOP) {
+          // Consistently hitting the top of the rep range -> increase weight
+          suggestedWeight = Math.round(topWeight * (1 + WEIGHT_INCREMENT_PCT) * 2) / 2; // round to nearest 0.5
+          suggestedReps = TARGET_REPS_BOTTOM;
+          recommendation = `You hit ${avgReps.toFixed(1)} avg reps at ${topWeight}kg last time. Time to add weight — try ${suggestedWeight}kg for ${suggestedReps} reps.`;
+        } else if (avgReps < TARGET_REPS_BOTTOM) {
+          // Struggling at current weight -> repeat and build reps
+          suggestedWeight = topWeight;
+          suggestedReps = lastSetAtTopWeight.reps + 1;
+          recommendation = `Reps were a bit low last session (${avgReps.toFixed(1)} avg). Stay at ${topWeight}kg and aim for ${suggestedReps} reps this time.`;
+        } else {
+          // In the target range -> small linear progression
+          suggestedReps = lastSetAtTopWeight.reps + 1;
+          recommendation = `Solid session at ${topWeight}kg. Try ${suggestedReps} reps at the same weight before increasing load.`;
+        }
+
+        return {
+          exercise: w.name,
+          lastSessionDate: w.date.toISOString(),
+          lastTopWeight: topWeight,
+          lastAvgReps: Math.round(avgReps * 10) / 10,
+          suggestedWeight,
+          suggestedReps,
+          recommendation,
+        };
+      })
+      .sort((a, b) => new Date(b.lastSessionDate).getTime() - new Date(a.lastSessionDate).getTime());
+
+    res.json({ suggestions });
+  } catch (error) {
+    console.error('Get workout suggestions error:', error);
+    res.status(500).json({ error: 'Failed to fetch workout suggestions.' });
+  }
+});
+
 // ── GET /api/workouts ────────────────────────────────────────────────────────
 router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
