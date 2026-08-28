@@ -4,12 +4,14 @@ import { getMeals, addMeal, deleteMeal, getInsight, estimateNutritionFromText } 
 import { useAuth } from "../context/AuthContext";
 import FoodSearch from "../components/FoodSearch";
 import FoodPhotoScan from "../components/FoodPhotoScan";
+import WaterTracker from "../components/WaterTracker";
 import {
   DEFAULT_CALORIE_GOAL,
   DEFAULT_PROTEIN_GOAL,
   DEFAULT_CARB_GOAL,
   DEFAULT_FAT_GOAL,
 } from "../constants/goals";
+import { Camera, X, Sparkles, Check, Utensils, Bot, Trash2 } from "lucide-react";
 
 interface Meal {
   id: string;
@@ -158,7 +160,6 @@ export default function Nutrition() {
         <p>Track your daily meals, macros, and calories with AI-powered tools.</p>
       </div>
 
-      {/* ── Daily Calories Overview ── */}
       <div className="nutrition-card daily-calories-card">
         <div className="card-title" style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ color: "#4ade80", fontSize: 16 }}>●</span> Daily Calories
@@ -173,7 +174,6 @@ export default function Nutrition() {
         <p className="remaining-text">{remainingCalories} kcal remaining</p>
       </div>
 
-      {/* ── Macros Overview ── */}
       <div className="macros-grid">
         <div className="nutrition-card macro-card">
           <div className="card-title" style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -213,7 +213,8 @@ export default function Nutrition() {
         </div>
       </div>
 
-      {/* ── Meals Section ── */}
+      <WaterTracker />
+
       <div className="nutrition-card meals-section">
         <div className="meals-header">
           <div>
@@ -244,7 +245,7 @@ export default function Nutrition() {
               }}
               type="button"
             >
-              📸 AI Food Scan
+              <Camera size={14} /> AI Food Scan
             </button>
             <button
               className="action-btn"
@@ -258,19 +259,20 @@ export default function Nutrition() {
           </div>
         </div>
 
-        {/* ── AI Photo Scan Mode ── */}
         {showForm && scanMode && (
           <div style={{ marginBottom: 20, padding: 16, background: "#0b100d", borderRadius: 14, border: "1px solid #1f2e24" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <strong style={{ color: "#4ade80", fontSize: 14 }}>🤖 Multimodal Food Photo Analyzer</strong>
+              <strong style={{ color: "#4ade80", fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}>
+                <Bot size={16} /> Multimodal Food Photo Analyzer
+              </strong>
               <button
-                style={{ background: "transparent", border: "none", color: "#8a958e", cursor: "pointer", fontSize: 13 }}
+                style={{ background: "transparent", border: "none", color: "#8a958e", cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", gap: 4 }}
                 onClick={() => {
                   setScanMode(false);
                   setShowForm(false);
                 }}
               >
-                ✕ Close
+                <X size={14} /> Close
               </button>
             </div>
             <FoodPhotoScan
@@ -288,7 +290,6 @@ export default function Nutrition() {
           </div>
         )}
 
-        {/* ── Manual Add / Auto-populated Form ── */}
         {showForm && !scanMode && (
           <form
             onSubmit={handleAddMeal}
@@ -303,15 +304,15 @@ export default function Nutrition() {
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#9da69f" }}>
-                {description && calories ? "✨ Review & Log Meal" : "Log a Meal"}
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#9da69f", display: "flex", alignItems: "center", gap: 6 }}>
+                {description && calories ? (<><Sparkles size={13} /> Review & Log Meal</>) : "Log a Meal"}
               </span>
               <button
                 type="button"
-                style={{ background: "transparent", border: "none", color: "#7a8580", cursor: "pointer" }}
+                style={{ background: "transparent", border: "none", color: "#7a8580", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
                 onClick={() => setShowForm(false)}
               >
-                ✕ Cancel
+                <X size={13} /> Cancel
               </button>
             </div>
 
@@ -379,7 +380,7 @@ export default function Nutrition() {
                 opacity: description.trim() ? 1 : 0.5,
               }}
             >
-              {estimating ? "🤖 Estimating..." : "✨ Estimate calories & macros with AI"}
+              {estimating ? (<><Bot size={14} /> Estimating...</>) : (<><Sparkles size={14} /> Estimate calories & macros with AI</>)}
             </button>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
@@ -459,12 +460,11 @@ export default function Nutrition() {
             </div>
 
             <button className="primary-button" type="submit" disabled={saving} style={{ marginTop: 6 }}>
-              {saving ? "Saving..." : "✓ Save Meal"}
+              {saving ? "Saving..." : "Save Meal"}
             </button>
           </form>
         )}
 
-        {/* ── High-End Meal List ── */}
         <div className="meals-list" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {loading && (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -475,7 +475,7 @@ export default function Nutrition() {
           )}
           {!loading && meals.length === 0 && (
             <div className="empty-state" style={{ padding: "32px 16px", textAlign: "center" }}>
-              <div className="empty-icon" style={{ fontSize: 24, marginBottom: 8, color: "#4ade80" }}>🥗</div>
+              <Utensils className="empty-icon" size={24} style={{ marginBottom: 8, color: "#4ade80" }} />
               <p style={{ color: "#7a8580", fontSize: 14 }}>No meals logged today yet. Snap a photo with AI or add your first meal above.</p>
             </div>
           )}
@@ -576,6 +576,8 @@ export default function Nutrition() {
                       padding: "6px 8px",
                       fontSize: 12,
                       transition: "all 0.15s ease",
+                      display: "flex",
+                      alignItems: "center",
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.borderColor = "#ef4444";
@@ -586,7 +588,7 @@ export default function Nutrition() {
                       e.currentTarget.style.color = "#8a968f";
                     }}
                   >
-                    {deletingId === meal.id ? "…" : "✕"}
+                    {deletingId === meal.id ? "…" : <Trash2 size={14} />}
                   </button>
                 </div>
               </div>
@@ -594,10 +596,9 @@ export default function Nutrition() {
         </div>
       </div>
 
-      {/* ── AI Nutrition Insight Card ── */}
       <div className="nutrition-card ai-insight-card">
         <div className="ai-insight-header">
-          <span className="robot-icon">🤖</span>
+          <Bot className="robot-icon" size={18} />
           <h2>AI Nutrition Coach Insight</h2>
         </div>
         <p style={{ lineHeight: 1.6, color: "#cbd5e1" }}>

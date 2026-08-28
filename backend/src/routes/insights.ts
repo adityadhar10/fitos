@@ -1,10 +1,10 @@
 import { Router, Response } from 'express';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import prisma from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 // Simple rate limiter to prevent hitting Gemini API quota
 const rateLimiter = {
@@ -85,18 +85,22 @@ Write the insight now:`;
       }
     } else {
       try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-        const result = await model.generateContent(prompt);
-        insight = result.response.text().trim();
+        const result = await genAI.models.generateContent({
+          model: 'gemini-3.6-flash',
+          contents: prompt,
+        });
+        insight = (result.text || '').trim();
       } catch (apiErr: any) {
         console.warn('Gemini API error:', apiErr.message);
         // Check if it's a quota/rate limit error (429)
         const isQuotaError = apiErr.status === 429 || apiErr.message?.includes('quota') || apiErr.message?.includes('rate limit');
         
         try {
-          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
-          const result = await model.generateContent(prompt);
-          insight = result.response.text().trim();
+          const result = await genAI.models.generateContent({
+            model: 'gemini-3.6-flash',
+            contents: prompt,
+          });
+          insight = (result.text || '').trim();
         } catch (fallbackErr: any) {
           console.warn('Gemini quota reached or API unavailable, using personalized rule-based coach insight.');
           const remainingCal = Math.max(0, user.calorieGoal - totalCalories);

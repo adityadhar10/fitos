@@ -8,6 +8,7 @@ import type {
   UserSettings,
   SettingsData,
 } from "../types/dashboard";
+import { Egg, Drumstick, Nut, UtensilsCrossed, User, Target, Footprints, Bell, Moon, Bot } from "lucide-react";
 
 export const dashboardData: DashboardData = {
   fitnessScore: 87,
@@ -38,28 +39,28 @@ export const nutritionData: NutritionData = {
     {
       id: "m1",
       type: "Breakfast",
-      icon: "🍳",
+      icon: Egg,
       description: "Eggs, oats & banana",
       calories: 520,
     },
     {
       id: "m2",
       type: "Lunch",
-      icon: "🍗",
+      icon: Drumstick,
       description: "Chicken, rice & vegetables",
       calories: 680,
     },
     {
       id: "m3",
       type: "Snack",
-      icon: "🥜",
+      icon: Nut,
       description: "Peanut butter & whey shake",
       calories: 380,
     },
     {
       id: "m4",
       type: "Dinner",
-      icon: "🍽️",
+      icon: UtensilsCrossed,
       description: "Paneer, roti & vegetables",
       calories: 600,
     },
@@ -119,13 +120,13 @@ export const userSettings: UserSettings = {
 
 export const settingsData: SettingsData = {
   profile: [
-    { icon: "👤", label: "Name", value: "Aditya" },
-    { icon: "🎯", label: "Fitness Goal", value: "Build Muscle" },
-    { icon: "👟", label: "Daily Step Goal", value: "10,000" },
+    { icon: User, label: "Name", value: "Aditya" },
+    { icon: Target, label: "Fitness Goal", value: "Build Muscle" },
+    { icon: Footprints, label: "Daily Step Goal", value: "10,000" },
   ],
   preferences: [
-    { icon: "🔔", label: "Notifications", value: "Enabled" },
-    { icon: "🌙", label: "Dark Mode", value: "Enabled" },
-    { icon: "🤖", label: "AI Insights", value: "Enabled" },
+    { icon: Bell, label: "Notifications", value: "Enabled" },
+    { icon: Moon, label: "Dark Mode", value: "Enabled" },
+    { icon: Bot, label: "AI Insights", value: "Enabled" },
   ],
 };

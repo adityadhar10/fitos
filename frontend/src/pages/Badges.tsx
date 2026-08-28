@@ -1,10 +1,36 @@
 import { useEffect, useState } from "react";
 import "../index.css";
 import { getBadges } from "../services/api";
+import {
+  Flame,
+  Utensils,
+  Scale,
+  Award,
+  Dumbbell,
+  Trophy,
+  Beef,
+  Footprints,
+  TrendingDown,
+  Target,
+  type LucideIcon,
+} from "lucide-react";
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  Flame,
+  Utensils,
+  Scale,
+  Award,
+  Dumbbell,
+  Trophy,
+  Beef,
+  Footprints,
+  TrendingDown,
+  Target,
+};
 
 interface Badge {
   id: string;
-  emoji: string;
+  icon: string;
   name: string;
   description: string;
   earned: boolean;
@@ -42,11 +68,10 @@ export default function Badges() {
   return (
     <div className="page-container page-enter">
       <div className="page-header">
-        <h1>Badges &amp; Achievements 🏅</h1>
+        <h1>Badges &amp; Achievements</h1>
         <p>Earn badges by hitting milestones in your fitness journey.</p>
       </div>
 
-      {/* Progress summary card */}
       <div className="section-card badges-summary-card">
         <div className="badges-summary-left">
           <div className="badges-summary-count">
@@ -73,7 +98,6 @@ export default function Badges() {
         </div>
       </div>
 
-      {/* Badge grid */}
       <div className="section-card">
         <div className="section-header">
           <h2>All Achievements</h2>
@@ -87,23 +111,28 @@ export default function Badges() {
           </div>
         ) : (
           <div className="badges-grid">
-            {data?.badges.map((badge) => (
-              <div
-                key={badge.id}
-                className={`badge-card ${badge.earned ? "earned" : "locked"}`}
-              >
-                <div className="badge-emoji">{badge.emoji}</div>
-                <div className="badge-name">{badge.name}</div>
-                <div className="badge-desc">{badge.description}</div>
-                {badge.earned && badge.earnedAt ? (
-                  <div className="badge-earned-date">
-                    ✅ {formatDate(badge.earnedAt)}
+            {data?.badges.map((badge) => {
+              const Icon = ICON_MAP[badge.icon] || Award;
+              return (
+                <div
+                  key={badge.id}
+                  className={`badge-card ${badge.earned ? "earned" : "locked"}`}
+                >
+                  <div className="badge-emoji">
+                    <Icon size={28} />
                   </div>
-                ) : (
-                  <div className="badge-locked-label">🔒 Not yet earned</div>
-                )}
-              </div>
-            ))}
+                  <div className="badge-name">{badge.name}</div>
+                  <div className="badge-desc">{badge.description}</div>
+                  {badge.earned && badge.earnedAt ? (
+                    <div className="badge-earned-date">
+                      {formatDate(badge.earnedAt)}
+                    </div>
+                  ) : (
+                    <div className="badge-locked-label">Not yet earned</div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

@@ -1,15 +1,15 @@
 
 import { Router, Response } from 'express';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 
 const router = Router();
 
-const genAI = new GoogleGenerativeAI(
-  process.env.GEMINI_API_KEY || ''
-);
+const genAI = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY || '',
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Rate limiter
@@ -136,11 +136,8 @@ If you cannot identify the food perfectly, make your best reasonable estimate.
       try {
         // IMPORTANT:
         // Use a current multimodal Gemini model.
-        const model = genAI.getGenerativeModel({
+        const result = await genAI.models.generateContent({
           model: 'gemini-3.6-flash',
-        });
-
-        const result = await model.generateContent({
           contents: [
             {
               role: 'user',
@@ -152,12 +149,12 @@ If you cannot identify the food perfectly, make your best reasonable estimate.
               ],
             },
           ],
-          generationConfig: {
+          config: {
             responseMimeType: 'application/json',
           },
         });
 
-        raw = result.response.text().trim();
+        raw = (result.text || '').trim();
 
         console.log('Gemini vision response:', raw);
 
@@ -326,9 +323,7 @@ router.post(
       // Gemini model
       // ─────────────────────────────────────────────────────────────────────
 
-      const model = genAI.getGenerativeModel({
-        model: 'gemini-3.6-flash',
-      });
+      // model created inline in generateContent call below
 
       const prompt = `
 You are a precise nutrition estimation AI.
@@ -371,7 +366,8 @@ Be realistic about portion sizes.
       let raw = '';
 
       try {
-        const result = await model.generateContent({
+        const result = await genAI.models.generateContent({
+          model: 'gemini-3.6-flash',
           contents: [
             {
               role: 'user',
@@ -382,12 +378,12 @@ Be realistic about portion sizes.
               ],
             },
           ],
-          generationConfig: {
+          config: {
             responseMimeType: 'application/json',
           },
         });
 
-        raw = result.response.text().trim();
+        raw = (result.text || '').trim();
 
         console.log(
           'Gemini text response:',
@@ -519,6 +515,53 @@ Be realistic about portion sizes.
     }
   }
 );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/vision/barcode/:code (OpenFoodFacts lookup)
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/barcode/:code', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const code = req.params.code as string;
+    if (!code || !/^\d+$/.test(code)) {
+      return res.status(400).json({ error: 'Invalid barcode format' });
+    }
+
+    const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json`);
+    if (!response.ok) {
+      return res.status(404).json({ error: 'Product not found for this barcode' });
+    }
+
+    const data = (await response.json()) as any;
+    if (data.status !== 1 || !data.product) {
+      return res.status(404).json({ error: 'Product not found in OpenFoodFacts database' });
+    }
+
+    const p = data.product;
+    const nutriments = p.nutriments || {};
+
+    const name = p.product_name || p.generic_name || 'Scanned Food Product';
+    const brand = p.brands ? ` (${p.brands})` : '';
+    const calories = Math.round(nutriments['energy-kcal_serving'] ?? nutriments['energy-kcal_100g'] ?? 0);
+    const protein = Math.round(nutriments['proteins_serving'] ?? nutriments['proteins_100g'] ?? 0);
+    const carbs = Math.round(nutriments['carbohydrates_serving'] ?? nutriments['carbohydrates_100g'] ?? 0);
+    const fats = Math.round(nutriments['fat_serving'] ?? nutriments['fat_100g'] ?? 0);
+
+    res.json({
+      product: {
+        name: `${name}${brand}`,
+        calories: calories || 150,
+        protein: protein || 0,
+        carbs: carbs || 0,
+        fats: fats || 0,
+        servingSize: p.serving_size || '100g',
+      },
+    });
+  } catch (error) {
+    console.error('Barcode lookup error:', error);
+    res.status(500).json({ error: 'Failed to query barcode database' });
+  }
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Export router

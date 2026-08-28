@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import "../index.css";
 import { getMeals, getTodayMetrics, updateTodayMetrics, getWeeklyMetrics, getInsight, getStreak } from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -10,6 +11,8 @@ import {
 } from "../constants/goals";
 import QuickActions from "../components/QuickActions";
 import TodayFocus from "../components/TodayFocus";
+import WaterTracker from "../components/WaterTracker";
+import { Flame, Beef, Footprints, Moon, Bot, ArrowRight } from "lucide-react";
 
 interface WeeklyPoint {
   day: string;
@@ -33,6 +36,7 @@ export default function Dashboard() {
   const [totalProtein, setTotalProtein] = useState(0);
   const [steps, setSteps] = useState(0);
   const [sleepHours, setSleepHours] = useState(0);
+  const [waterMl, setWaterMl] = useState(0);
   const [weekly, setWeekly] = useState<WeeklyPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [streak, setStreak] = useState(0);
@@ -59,8 +63,9 @@ export default function Dashboard() {
       setTotalCalories(meals.reduce((sum, m) => sum + m.calories, 0));
       setTotalProtein(meals.reduce((sum, m) => sum + m.protein, 0));
 
-      setSteps(metricsRes.data.metric.steps);
-      setSleepHours(metricsRes.data.metric.sleepHours);
+      setSteps(metricsRes.data.metric.steps || 0);
+      setSleepHours(metricsRes.data.metric.sleepHours || 0);
+      setWaterMl(metricsRes.data.metric.waterMl || 0);
       setStreak(streakRes.data.streak ?? 0);
 
       const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -102,7 +107,6 @@ export default function Dashboard() {
   const stepsPct = Math.min(100, (steps / DEFAULT_STEP_GOAL) * 100);
   const sleepPct = Math.min(100, (sleepHours / DEFAULT_SLEEP_GOAL) * 100);
 
-  // Consistency score: how many of last 7 days had steps > 0
   const activeDaysCount = weekly.filter((w) => w.steps > 0).length;
   const consistencyPct = Math.round((activeDaysCount / 7) * 100);
 
@@ -135,7 +139,7 @@ export default function Dashboard() {
   const STATS_DATA = [
     {
       id: "calories",
-      icon: "🔥",
+      icon: Flame,
       label: "Calories",
       value: totalCalories.toLocaleString(),
       target: `/ ${calorieGoal.toLocaleString()} kcal`,
@@ -143,7 +147,7 @@ export default function Dashboard() {
     },
     {
       id: "protein",
-      icon: "🥩",
+      icon: Beef,
       label: "Protein",
       value: `${totalProtein}g`,
       target: `/ ${proteinGoal}g`,
@@ -151,7 +155,7 @@ export default function Dashboard() {
     },
     {
       id: "steps",
-      icon: "🏃",
+      icon: Footprints,
       label: "Steps",
       value: steps.toLocaleString(),
       target: `/ ${DEFAULT_STEP_GOAL.toLocaleString()}`,
@@ -159,7 +163,7 @@ export default function Dashboard() {
     },
     {
       id: "sleep",
-      icon: "😴",
+      icon: Moon,
       label: "Sleep",
       value: `${sleepHours}h`,
       target: `/ ${DEFAULT_SLEEP_GOAL}h`,
@@ -178,7 +182,7 @@ export default function Dashboard() {
     <div className="dashboard page-enter">
       <div className="dashboard-header">
         <h1>
-          {getGreeting()}{user?.name ? `, ${user.name.split(" ")[0]}` : ""} 👋
+          {getGreeting()}{user?.name ? `, ${user.name.split(" ")[0]}` : ""}
         </h1>
         <p>Your daily command center — score, goals, and what to do next.</p>
       </div>
@@ -197,7 +201,6 @@ export default function Dashboard() {
 
       <QuickActions />
 
-      {/* Fitness Score + breakdown */}
       <div className="fitness-score">
         <div className="fitness-score-left">
           <div className="fitness-score-header">
@@ -223,7 +226,7 @@ export default function Dashboard() {
           </div>
           {streak > 0 && (
             <div className="streak-badge">
-              🔥 {streak}-day streak
+              {streak}-day streak
             </div>
           )}
         </div>
@@ -247,37 +250,105 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Stat cards */}
       <div className="stats-grid">
-        {STATS_DATA.map((stat) => (
-          <div key={stat.id} className="stat-card">
-            <div className="stat-title">
-              <span className="stat-icon">{stat.icon}</span> {stat.label}
+        {STATS_DATA.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div key={stat.id} className="stat-card">
+              <div className="stat-title">
+                <span className="stat-icon"><Icon size={16} /></span> {stat.label}
+              </div>
+              <div className="stat-value">
+                {loading ? (
+                  <div className="skeleton skeleton-number" />
+                ) : (
+                  <>
+                    <strong>{stat.value}</strong>
+                    <span>{stat.target}</span>
+                  </>
+                )}
+              </div>
+              <div className="stat-progress">
+                <div
+                  className="stat-progress-fill"
+                  style={{ width: loading ? "0%" : `${stat.pct}%` }}
+                />
+              </div>
             </div>
-            <div className="stat-value">
-              {loading ? (
-                <div className="skeleton skeleton-number" />
-              ) : (
-                <>
-                  <strong>{stat.value}</strong>
-                  <span>{stat.target}</span>
-                </>
-              )}
-            </div>
-            <div className="stat-progress">
-              <div
-                className="stat-progress-fill"
-                style={{ width: loading ? "0%" : `${stat.pct}%` }}
-              />
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* Update steps & sleep */}
+      <div
+        className="section-card"
+        style={{
+          background: "linear-gradient(135deg, #0e1c14 0%, #0d1511 100%)",
+          border: "1px solid #1f3827",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 14,
+          padding: "16px 20px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 12,
+              background: "#152a1e",
+              border: "1px solid #254a34",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              color: "#4ade80",
+            }}
+          >
+            <Bot size={22} />
+          </div>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#ffffff" }}>FitOS AI Coach Studio</h2>
+              <span style={{ fontSize: 11, background: "#1b3824", color: "#4ade80", padding: "2px 8px", borderRadius: 6, fontWeight: 700 }}>
+                24/7 ADVISOR
+              </span>
+            </div>
+            <p className="subtext" style={{ margin: "2px 0 0 0", fontSize: 13 }}>
+              Ask personalized questions, get meal ideas for remaining macros, and diagnose stalls.
+            </p>
+          </div>
+        </div>
+
+        <Link
+          to="/coach"
+          className="primary-button"
+          style={{
+            padding: "10px 18px",
+            fontSize: 13,
+            fontWeight: 700,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            textDecoration: "none",
+            borderRadius: 10,
+          }}
+        >
+          <span>Open Coach Chat</span> <ArrowRight size={14} />
+        </Link>
+      </div>
+
+      <WaterTracker
+        initialWater={waterMl}
+        dailyGoal={3000}
+        onWaterChange={(w) => setWaterMl(w)}
+      />
+
       <div className="section-card">
         <div className="section-header">
-          <h2>⚡ Update Steps & Sleep</h2>
+          <h2>Update Steps & Sleep</h2>
           <button className="action-btn" onClick={() => setEditingMetrics((s) => !s)}>
             {editingMetrics ? "Cancel" : "Edit"}
           </button>
@@ -327,7 +398,6 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Weekly chart */}
       <div className="weekly-chart">
         <div className="weekly-chart-header">
           <div>
@@ -370,9 +440,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* AI Insight */}
       <div className="ai-insight">
-        <h2>🤖 AI Insight</h2>
+        <h2>AI Insight</h2>
         {insightLoading ? (
           <>
             <div className="skeleton skeleton-text wide" style={{ marginBottom: 6 }} />

@@ -15,7 +15,7 @@ function WeeklyChart() {
     <div className="weekly-chart">
 
       <div className="weekly-chart-header">
-        <h2>📊 Weekly Activity</h2>
+        <h2>Weekly Activity</h2>
         <p>Steps over the last 7 days</p>
       </div>
 

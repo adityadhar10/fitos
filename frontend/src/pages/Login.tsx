@@ -20,7 +20,11 @@ function Login({ }: LoginProps) {
     try {
       await login(email, password);
     } catch (err: any) {
-      setError(err?.response?.data?.error || "Login failed. Please try again.");
+      if (!err.response) {
+        setError("Unable to connect to the FitOS server. Please check your connection or start the backend server.");
+      } else {
+        setError(err?.response?.data?.error || "Login failed. Please check your credentials and try again.");
+      }
     } finally {
       setLoading(false);
     }

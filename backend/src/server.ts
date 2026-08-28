@@ -10,6 +10,8 @@ import insightsRoutes from './routes/insights.js';
 import visionRoutes from './routes/vision.js';
 import badgesRoutes from './routes/badges.js';
 import exportRoutes from './routes/export.js';
+import coachRoutes from './routes/coach.js';
+import routinesRoutes from './routes/routines.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -47,6 +49,8 @@ app.use('/api/insights', insightsRoutes);
 app.use('/api/vision', visionRoutes);
 app.use('/api/badges', badgesRoutes);
 app.use('/api/export', exportRoutes);
+app.use('/api/coach', coachRoutes);
+app.use('/api/routines', routinesRoutes);
 
 // ── Global error handler (must be LAST) ──────────────────────────────────────
 app.use(errorHandler);

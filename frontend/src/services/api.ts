@@ -51,25 +51,41 @@ export const addWorkout = (
   muscleGroup?: string
 ) => api.post("/workouts", { name, sets, muscleGroup });
 export const deleteWorkout = (id: string) => api.delete(`/workouts/${id}`);
+export const getWorkoutPRs = () => api.get("/workouts/prs");
 
 // ---- Weight ----
 export const getWeightHistory = () => api.get("/weight");
 export const addWeightEntry = (weight: number) => api.post("/weight", { weight });
 
-// ---- Metrics (steps/sleep) ----
+// ---- Metrics (steps/sleep/water) ----
 export const getTodayMetrics = () => api.get("/metrics/today");
-export const updateTodayMetrics = (steps?: number, sleepHours?: number) =>
-  api.post("/metrics/today", { steps, sleepHours });
+export const updateTodayMetrics = (steps?: number, sleepHours?: number, waterMl?: number) =>
+  api.post("/metrics/today", { steps, sleepHours, waterMl });
 export const getWeeklyMetrics = () => api.get("/metrics/weekly");
 export const getStreak = () => api.get("/metrics/streak");
 
-// ---- AI Insights ----
+// ---- AI Coach & Insights ----
 export const getInsight = () => api.get("/insights");
+export const chatWithCoach = (message: string, history?: { role: string; content: string }[]) =>
+  api.post("/coach/chat", { message, history });
 
 
-// ---- AI Vision ----
+// ---- AI Vision & Barcode ----
 export const analyzeFood = (imageBase64: string, mimeType = 'image/jpeg') =>
   api.post('/vision/analyze', { imageBase64, mimeType });
+export const lookupBarcode = (code: string) =>
+  api.get(`/vision/barcode/${code}`);
+
+// ---- Workout Routines ----
+export const getRoutineTemplates = () =>
+  api.get('/routines/templates');
+export const generateRoutine = (data: {
+  goal: string;
+  daysPerWeek: number;
+  experienceLevel: string;
+  equipment: string;
+  focusArea?: string;
+}) => api.post('/routines/generate', data);
 
 // ---- Badges ----
 export const getBadges = () => api.get('/badges');

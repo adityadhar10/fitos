@@ -97,13 +97,13 @@ export default function FoodPhotoScan({ onResult }: FoodPhotoScanProps) {
 
       {!preview && (
         <div className="scan-upload-zone" onClick={() => fileInputRef.current?.click()}>
-          <div className="scan-upload-icon">📸</div>
+          <div className="scan-upload-icon"></div>
           <p className="scan-upload-title">Scan Food with AI</p>
           <p className="scan-upload-sub">
             Take a photo or upload an image — Gemini Vision will estimate the macros
           </p>
           <button className="scan-btn" type="button">
-            📷 Open Camera / Upload
+            Open Camera / Upload
           </button>
         </div>
       )}
@@ -115,7 +115,7 @@ export default function FoodPhotoScan({ onResult }: FoodPhotoScanProps) {
             {scanning && (
               <div className="scan-overlay">
                 <div className="scan-line" />
-                <p className="scan-analyzing-text">🤖 Analyzing with Gemini Vision...</p>
+                <p className="scan-analyzing-text">Analyzing with Gemini Vision...</p>
               </div>
             )}
           </div>
@@ -129,7 +129,7 @@ export default function FoodPhotoScan({ onResult }: FoodPhotoScanProps) {
 
           {error && (
             <div className="scan-error">
-              <span>⚠️ {error}</span>
+              <span>️ {error}</span>
               <button className="scan-retry-btn" onClick={handleRetry} type="button">
                 Try Again
               </button>
@@ -139,7 +139,7 @@ export default function FoodPhotoScan({ onResult }: FoodPhotoScanProps) {
           {result && !scanning && (
             <div className="scan-result-card">
               <div className="scan-result-header">
-                <span className="scan-result-icon">🍽️</span>
+                <span className="scan-result-icon">️</span>
                 <div>
                   <h3 className="scan-result-name">{result.description}</h3>
                   <span
@@ -172,10 +172,10 @@ export default function FoodPhotoScan({ onResult }: FoodPhotoScanProps) {
 
               <div className="scan-action-row">
                 <button className="scan-retry-btn" onClick={handleRetry} type="button">
-                  🔄 Retake
+                  Retake
                 </button>
                 <button className="scan-use-btn" onClick={handleUseResult} type="button">
-                  ✅ Log This Meal
+                  Log This Meal
                 </button>
               </div>
             </div>

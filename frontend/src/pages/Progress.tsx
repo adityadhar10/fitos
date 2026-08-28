@@ -10,6 +10,8 @@ import {
 } from "../services/api";
 import WeightChart from "../components/WeightChart";
 import MuscleHeatmap from "../components/MuscleHeatmap";
+import PredictiveWeightChart from "../components/PredictiveWeightChart";
+import { Scale, Dumbbell, Utensils } from "lucide-react";
 
 interface WeightEntry {
   id: string;
@@ -96,10 +98,9 @@ export default function Progress() {
         <p>Muscle heatmap, weight trends, and your full training history.</p>
       </div>
 
-      {/* ── Muscle Group Heatmap ── */}
       <div className="section-card">
         <div className="section-header">
-          <h2>💪 Muscle Group Heatmap</h2>
+          <h2>Muscle Group Heatmap</h2>
           <span className="subtext" style={{ marginTop: 0 }}>Last 7 days</span>
         </div>
         {loading ? (
@@ -109,7 +110,6 @@ export default function Progress() {
         )}
       </div>
 
-      {/* Stats row */}
       {!loading && currentWeight !== null && (
         <div className="weight-stats-row">
           <div className="weight-stat-item">
@@ -131,10 +131,9 @@ export default function Progress() {
         </div>
       )}
 
-      {/* Chart */}
       <div className="section-card">
         <div className="section-header">
-          <h2>📈 Weight Chart</h2>
+          <h2>Weight Chart</h2>
           <button className="action-btn" onClick={() => setShowForm((s) => !s)}>
             {showForm ? "Cancel" : "+ Log Weight"}
           </button>
@@ -183,10 +182,17 @@ export default function Progress() {
         )}
       </div>
 
-      {/* History list */}
+      {!loading && entries.length > 0 && (
+        <PredictiveWeightChart
+          entries={entries}
+          goalWeight={GOAL_WEIGHT_KG}
+          calorieDeficitDaily={-350}
+        />
+      )}
+
       <div className="section-card">
         <div className="section-header">
-          <h2>⚖️ History</h2>
+          <h2>History</h2>
           <span className="subtext" style={{ marginTop: 0 }}>
             {entries.length} {entries.length === 1 ? "entry" : "entries"}
           </span>
@@ -205,7 +211,7 @@ export default function Progress() {
           )}
           {!loading && entries.length === 0 && (
             <div className="empty-state">
-              <div className="empty-icon">⚖️</div>
+              <Scale className="empty-icon" size={24} />
               <p>No entries yet. Log your first weight above.</p>
             </div>
           )}
@@ -219,10 +225,9 @@ export default function Progress() {
         </div>
       </div>
 
-      {/* ── Export Data (Phase 7) ── */}
       <div className="section-card">
         <div className="section-header">
-          <h2>📥 Export Your Fitness Data</h2>
+          <h2>Export Your Fitness Data</h2>
           <span className="subtext" style={{ marginTop: 0 }}>Download CSV reports</span>
         </div>
         <p className="subtext" style={{ marginBottom: 16 }}>
@@ -234,21 +239,21 @@ export default function Progress() {
             style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 10, cursor: "pointer" }}
             onClick={() => exportWorkoutCSV().catch((err) => alert("Failed to export: " + err.message))}
           >
-            <span>🏋️</span> Workouts CSV
+            <Dumbbell size={14} /> Workouts CSV
           </button>
           <button
             className="tab-btn active"
             style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 10, cursor: "pointer" }}
             onClick={() => exportNutritionCSV().catch((err) => alert("Failed to export: " + err.message))}
           >
-            <span>🥗</span> Nutrition CSV
+            <Utensils size={14} /> Nutrition CSV
           </button>
           <button
             className="tab-btn active"
             style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 10, cursor: "pointer" }}
             onClick={() => exportWeightCSV().catch((err) => alert("Failed to export: " + err.message))}
           >
-            <span>⚖️</span> Weight Log CSV
+            <Scale size={14} /> Weight Log CSV
           </button>
         </div>
       </div>

@@ -20,6 +20,100 @@ const addWorkoutSchema = z.object({
     .min(1, 'At least one set is required'),
 });
 
+// ── GET /api/workouts/prs ────────────────────────────────────────────────────
+router.get('/prs', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const workouts = await prisma.workout.findMany({
+      where: { userId: req.userId },
+      include: { sets: true },
+      orderBy: { date: 'desc' },
+    });
+
+    const prMap = new Map<string, {
+      name: string;
+      maxWeight: number;
+      repsAtMaxWeight: number;
+      bestEstimated1RM: number;
+      maxSessionVolume: number;
+      lastDate: string;
+    }>();
+
+    for (const w of workouts) {
+      const exerciseKey = w.name.trim().toLowerCase();
+      let sessionVolume = 0;
+      let sessionMaxWeight = 0;
+      let sessionMaxReps = 0;
+      let sessionBest1RM = 0;
+
+      for (const s of w.sets) {
+        sessionVolume += s.reps * s.weight;
+        if (s.weight > sessionMaxWeight) {
+          sessionMaxWeight = s.weight;
+          sessionMaxReps = s.reps;
+        }
+        // Epley 1RM formula
+        const est1RM = s.reps === 1 ? s.weight : Math.round(s.weight * (1 + s.reps / 30));
+        if (est1RM > sessionBest1RM) {
+          sessionBest1RM = est1RM;
+        }
+      }
+
+      if (!prMap.has(exerciseKey)) {
+        prMap.set(exerciseKey, {
+          name: w.name,
+          maxWeight: sessionMaxWeight,
+          repsAtMaxWeight: sessionMaxReps,
+          bestEstimated1RM: sessionBest1RM,
+          maxSessionVolume: sessionVolume,
+          lastDate: w.date.toISOString(),
+        });
+      } else {
+        const existing = prMap.get(exerciseKey)!;
+        if (sessionMaxWeight > existing.maxWeight) {
+          existing.maxWeight = sessionMaxWeight;
+          existing.repsAtMaxWeight = sessionMaxReps;
+        }
+        if (sessionBest1RM > existing.bestEstimated1RM) {
+          existing.bestEstimated1RM = sessionBest1RM;
+        }
+        if (sessionVolume > existing.maxSessionVolume) {
+          existing.maxSessionVolume = sessionVolume;
+        }
+      }
+    }
+
+    const prs = Array.from(prMap.values()).sort((a, b) => b.maxWeight - a.maxWeight);
+
+    // Compute muscle recovery status
+    const standardMuscles = ['Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core'];
+    const now = Date.now();
+    const muscleRecovery = standardMuscles.map((muscle) => {
+      const lastTrained = workouts.find((w) =>
+        (w.muscleGroup && w.muscleGroup.toLowerCase().includes(muscle.toLowerCase())) ||
+        w.name.toLowerCase().includes(muscle.toLowerCase())
+      );
+
+      if (!lastTrained) {
+        return { muscle, status: 'Fresh', score: 100, hoursAgo: null, label: '🟢 Fresh (Ready)' };
+      }
+
+      const diffHours = Math.round((now - new Date(lastTrained.date).getTime()) / (1000 * 60 * 60));
+      if (diffHours < 24) {
+        return { muscle, status: 'Fatigued', score: 35, hoursAgo: diffHours, label: '🔴 Fatigued (Rest)' };
+      } else if (diffHours < 48) {
+        return { muscle, status: 'Recovering', score: 70, hoursAgo: diffHours, label: '🟡 Recovering' };
+      } else {
+        return { muscle, status: 'Fresh', score: 100, hoursAgo: diffHours, label: '🟢 Fresh (Ready)' };
+      }
+    });
+
+    res.json({ prs, muscleRecovery });
+  } catch (error) {
+    console.error('Get PRs error:', error);
+    res.status(500).json({ error: 'Failed to fetch PRs.' });
+  }
+});
+
 // ── GET /api/workouts ────────────────────────────────────────────────────────
 router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
   try {

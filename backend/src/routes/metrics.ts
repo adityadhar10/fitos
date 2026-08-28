@@ -10,8 +10,9 @@ const router = Router();
 const updateMetricsSchema = z.object({
   steps: z.coerce.number().int().nonnegative().optional(),
   sleepHours: z.coerce.number().min(0).max(24, 'Sleep hours cannot exceed 24').optional(),
-}).refine((data) => data.steps !== undefined || data.sleepHours !== undefined, {
-  message: 'At least one of steps or sleepHours must be provided.',
+  waterMl: z.coerce.number().int().nonnegative().max(10000, 'Water intake cannot exceed 10000ml').optional(),
+}).refine((data) => data.steps !== undefined || data.sleepHours !== undefined || data.waterMl !== undefined, {
+  message: 'At least one metric (steps, sleepHours, or waterMl) must be provided.',
 });
 
 // ── GET /api/metrics/today ───────────────────────────────────────────────────
@@ -24,7 +25,7 @@ router.get('/today', requireAuth, async (req: AuthRequest, res: Response) => {
       where: { userId: req.userId, date: { gte: startOfDay } },
     });
 
-    res.json({ metric: metric || { steps: 0, sleepHours: 0 } });
+    res.json({ metric: metric || { steps: 0, sleepHours: 0, waterMl: 0 } });
   } catch (error) {
     console.error('Get metrics error:', error);
     res.status(500).json({ error: 'Failed to fetch metrics.' });
@@ -34,7 +35,7 @@ router.get('/today', requireAuth, async (req: AuthRequest, res: Response) => {
 // ── POST /api/metrics/today ──────────────────────────────────────────────────
 router.post('/today', requireAuth, validate(updateMetricsSchema), async (req: AuthRequest, res: Response) => {
   try {
-    const { steps, sleepHours } = req.body;
+    const { steps, sleepHours, waterMl } = req.body;
 
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
@@ -50,6 +51,7 @@ router.post('/today', requireAuth, validate(updateMetricsSchema), async (req: Au
         data: {
           steps: steps !== undefined ? steps : existing.steps,
           sleepHours: sleepHours !== undefined ? sleepHours : existing.sleepHours,
+          waterMl: waterMl !== undefined ? waterMl : (existing.waterMl ?? 0),
         },
       });
     } else {
@@ -58,6 +60,7 @@ router.post('/today', requireAuth, validate(updateMetricsSchema), async (req: Au
           userId: req.userId!,
           steps: steps ?? 0,
           sleepHours: sleepHours ?? 0,
+          waterMl: waterMl ?? 0,
         },
       });
     }

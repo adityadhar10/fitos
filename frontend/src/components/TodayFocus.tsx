@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { TrendingUp, Utensils, Flame, Beef, Footprints, Moon, Trophy, type LucideIcon } from "lucide-react";
 
 interface TodayFocusProps {
   totalCalories: number;
@@ -34,43 +35,45 @@ export default function TodayFocus({
   let message = "You're on track today. Keep building momentum!";
   let cta = "View Progress";
   let to = "/progress";
-  let icon = "✨";
+  let Icon: LucideIcon = TrendingUp;
 
   if (totalCalories === 0) {
     message = "Start fueling your day — log your first meal to kick off nutrition tracking.";
     cta = "Log Meal";
     to = "/nutrition";
-    icon = "🥗";
+    Icon = Utensils;
   } else if (totalCalories < calorieGoal * 0.5) {
     message = `You're at ${totalCalories} / ${calorieGoal} kcal. Add a meal or snack to stay on pace.`;
     cta = "Add Meal";
     to = "/nutrition";
-    icon = "🔥";
+    Icon = Flame;
   } else if (totalProtein < proteinGoal * 0.5) {
     message = `Protein is at ${totalProtein}g / ${proteinGoal}g. Prioritize a high-protein meal next.`;
     cta = "Boost Protein";
     to = "/nutrition";
-    icon = "🥩";
+    Icon = Beef;
   } else if (steps < stepGoal * 0.4) {
     message = `Only ${steps.toLocaleString()} steps so far. Start the phone sensor or take a short walk.`;
     cta = "Track Steps";
     to = "/activity";
-    icon = "🚶";
+    Icon = Footprints;
   } else if (sleepHours === 0) {
     message = `Sleep isn't logged yet. Log at least ${sleepGoal}h for a complete fitness score.`;
     cta = "Log Sleep";
     to = "/activity";
-    icon = "😴";
+    Icon = Moon;
   } else if (totalCalories >= calorieGoal && steps >= stepGoal) {
     message = "Outstanding day — calorie and step goals crushed. Recovery and consistency win tomorrow.";
     cta = "See Badges";
     to = "/badges";
-    icon = "🏆";
+    Icon = Trophy;
   }
 
   return (
     <div className="today-focus">
-      <div className="today-focus-icon">{icon}</div>
+      <div className="today-focus-icon">
+        <Icon size={22} />
+      </div>
       <div className="today-focus-body">
         <h2>Today's Focus</h2>
         <p>{message}</p>

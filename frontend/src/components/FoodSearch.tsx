@@ -80,7 +80,7 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
   return (
     <div className="food-search-wrapper" ref={wrapperRef}>
       <div className="food-search-input-row">
-        <span className="food-search-icon">🔍</span>
+        <span className="food-search-icon"></span>
         <input
           className="food-search-input"
           type="text"

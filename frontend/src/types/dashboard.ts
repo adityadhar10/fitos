@@ -1,3 +1,5 @@
+import type { LucideIcon } from "lucide-react";
+
 export interface StatCardProps {
   icon: string;
   title: string;
@@ -28,7 +30,7 @@ export interface MacroStat {
 export interface Meal {
   id: string;
   type: "Breakfast" | "Lunch" | "Snack" | "Dinner";
-  icon: string;
+  icon: LucideIcon;
   description: string;
   calories: number;
 }
@@ -85,7 +87,7 @@ export interface UserSettings {
 }
 
 export interface SettingItem {
-  icon: string;
+  icon: LucideIcon;
   label: string;
   value: string;
 }

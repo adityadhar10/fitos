@@ -27,7 +27,7 @@ export default function WeightChart({ entries, goalWeight }: Props) {
   if (entries.length === 0) {
     return (
       <div className="empty-state" style={{ padding: "32px 20px" }}>
-        <div className="empty-icon">📉</div>
+        <div className="empty-icon"></div>
         <p>Log your first weight entry to see your chart.</p>
       </div>
     );

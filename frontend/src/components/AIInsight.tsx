@@ -5,7 +5,7 @@ interface AIInsightProps {
 function AIInsight({ insight }: AIInsightProps) {
   return (
     <div className="ai-insight">
-      <h2>🤖 AI Insight</h2>
+      <h2>AI Insight</h2>
       <p>{insight}</p>
     </div>
   );

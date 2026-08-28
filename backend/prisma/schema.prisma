@@ -80,6 +80,7 @@ model DailyMetric {
   date       DateTime @default(now())
   steps      Int      @default(0)
   sleepHours Float    @default(0)
+  waterMl    Int      @default(0)
 
   @@unique([userId, date])
 }

@@ -93,7 +93,7 @@ export default function AutoStepTracker({ initialSteps, onStepsChange }: AutoSte
                 transition: "all 0.15s ease",
               }}
             >
-              ⏸ Pause Sensor
+              Pause Sensor
             </button>
           )}
         </div>

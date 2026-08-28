@@ -3,6 +3,7 @@ import "../index.css";
 import { getTodayMetrics, updateTodayMetrics } from "../services/api";
 import AutoStepTracker from "../components/AutoStepTracker";
 import { DEFAULT_STEP_GOAL, DEFAULT_SLEEP_GOAL } from "../constants/goals";
+import { Flame, Clock, type LucideIcon } from "lucide-react";
 
 export default function Activity() {
   const [steps, setSteps] = useState(0);
@@ -37,7 +38,7 @@ export default function Activity() {
   const stepsPct = Math.min(100, Math.round((steps / DEFAULT_STEP_GOAL) * 100));
   const sleepPct = Math.min(100, Math.round((sleepHours / DEFAULT_SLEEP_GOAL) * 100));
 
-  const circumference = 2 * Math.PI * 52; // r=52
+  const circumference = 2 * Math.PI * 52;
   const stepsOffset = circumference - (stepsPct / 100) * circumference;
   const sleepOffset = circumference - (sleepPct / 100) * circumference;
 
@@ -62,19 +63,18 @@ export default function Activity() {
 
   const recoveryScore = Math.round((stepsPct + sleepPct) / 2);
 
-  const ACTIVITY_STATS = [
-    { id: "calories", icon: "🔥", label: "Calories Burned", value: `${caloriesBurned} kcal` },
-    { id: "time",     icon: "⏱️", label: "Active Time",     value: activeTimeLabel },
+  const ACTIVITY_STATS: { id: string; icon: LucideIcon; label: string; value: string }[] = [
+    { id: "calories", icon: Flame, label: "Calories Burned", value: `${caloriesBurned} kcal` },
+    { id: "time", icon: Clock, label: "Active Time", value: activeTimeLabel },
   ];
 
   return (
     <div className="page-container page-enter">
       <div className="page-header">
-        <h1>Activity ⚡</h1>
+        <h1>Activity</h1>
         <p>Real-time movement detection, automatic step counter, and sleep tracker.</p>
       </div>
 
-      {/* ── Real-Time Auto Step Sensor Tracker ── */}
       {!loading && (
         <AutoStepTracker
           initialSteps={steps}
@@ -82,7 +82,6 @@ export default function Activity() {
         />
       )}
 
-      {/* ── Recovery score ── */}
       {!loading && (
         <div className="recovery-score-card">
           <div>
@@ -99,9 +98,7 @@ export default function Activity() {
         </div>
       )}
 
-      {/* ── Ring cards ── */}
       <div className="activity-rings-row">
-        {/* Steps ring */}
         <div className="activity-ring-card">
           <p className="activity-ring-label">Steps</p>
           <div className="activity-ring-wrapper">
@@ -123,7 +120,6 @@ export default function Activity() {
           <p className="activity-ring-pct">{loading ? "" : `${stepsPct}%`}</p>
         </div>
 
-        {/* Sleep ring */}
         <div className="activity-ring-card">
           <p className="activity-ring-label">Sleep</p>
           <div className="activity-ring-wrapper">
@@ -146,25 +142,26 @@ export default function Activity() {
         </div>
       </div>
 
-      {/* ── Stat cards ── */}
       <div className="section-card">
         <h2 className="section-title">Today's Stats</h2>
         <div className="activity-grid">
-          {ACTIVITY_STATS.map((act) => (
-            <div key={act.id} className="activity-card">
-              <div className="card-title">
-                <span className="icon">{act.icon}</span>
-                <span>{act.label}</span>
+          {ACTIVITY_STATS.map((act) => {
+            const Icon = act.icon;
+            return (
+              <div key={act.id} className="activity-card">
+                <div className="card-title">
+                  <span className="icon"><Icon size={16} /></span>
+                  <span>{act.label}</span>
+                </div>
+                <div className="activity-value">
+                  <strong>{loading ? "–" : act.value}</strong>
+                </div>
               </div>
-              <div className="activity-value">
-                <strong>{loading ? "–" : act.value}</strong>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      {/* ── Update form ── */}
       <div className="section-card">
         <div className="section-header">
           <h2>Update Activity</h2>

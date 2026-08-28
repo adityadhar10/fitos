@@ -4,10 +4,30 @@ import { useAuth } from '../context/AuthContext';
 import { exportWorkoutCSV, exportNutritionCSV, exportWeightCSV } from '../services/api';
 import { DEFAULT_STEP_GOAL } from '../constants/goals';
 import { APP_VERSION } from '../constants/version';
+import TDEECalculator from '../components/TDEECalculator';
+import {
+  User,
+  Mail,
+  Target,
+  Footprints,
+  AlertTriangle,
+  Dumbbell,
+  Utensils,
+  Scale,
+  Bell,
+  Moon,
+  Bot,
+  Smartphone,
+  Download,
+  Info,
+  Cpu,
+  Layers,
+  type LucideIcon,
+} from 'lucide-react';
 
 interface ExportButton {
   id: string;
-  icon: string;
+  icon: LucideIcon;
   label: string;
   desc: string;
   fn: () => Promise<void>;
@@ -57,25 +77,32 @@ export default function Settings() {
   const EXPORT_BUTTONS: ExportButton[] = [
     {
       id: 'workout',
-      icon: '🏋️',
+      icon: Dumbbell,
       label: 'Workout History CSV',
       desc: 'All exercises, sets, reps and volume',
       fn: exportWorkoutCSV,
     },
     {
       id: 'nutrition',
-      icon: '🥗',
+      icon: Utensils,
       label: 'Nutrition Log CSV',
       desc: 'Every meal with macros logged',
       fn: exportNutritionCSV,
     },
     {
       id: 'weight',
-      icon: '⚖️',
+      icon: Scale,
       label: 'Weight History CSV',
       desc: 'All body-weight weigh-ins over time',
       fn: exportWeightCSV,
     },
+  ];
+
+  const PREFERENCES: { icon: LucideIcon; label: string; value: string }[] = [
+    { icon: Bell, label: 'Notifications', value: 'Enabled' },
+    { icon: Moon, label: 'Dark Mode', value: 'Enabled' },
+    { icon: Bot, label: 'AI Insights', value: 'Enabled' },
+    { icon: Smartphone, label: 'PWA Install', value: 'Available' },
   ];
 
   const handleExport = async (btn: ExportButton) => {
@@ -93,7 +120,7 @@ export default function Settings() {
   return (
     <div className="page-container page-enter">
       <div className="page-header">
-        <h1>Settings ⚙️</h1>
+        <h1>Settings</h1>
         <p>Manage your FitOS profile and export your data.</p>
       </div>
 
@@ -102,19 +129,19 @@ export default function Settings() {
         <h2 className="section-title">Profile</h2>
         <div className="settings-list">
           <div className="settings-item">
-            <span className="label"><span className="icon">👤</span> Name</span>
+            <span className="label"><span className="icon"><User size={16} /></span> Name</span>
             <span className="value">{user?.name ?? '—'}</span>
           </div>
           <div className="settings-item">
-            <span className="label"><span className="icon">📧</span> Email</span>
+            <span className="label"><span className="icon"><Mail size={16} /></span> Email</span>
             <span className="value">{user?.email ?? '—'}</span>
           </div>
           <div className="settings-item">
-            <span className="label"><span className="icon">🎯</span> Fitness Goal</span>
+            <span className="label"><span className="icon"><Target size={16} /></span> Fitness Goal</span>
             <span className="value">Build Muscle</span>
           </div>
           <div className="settings-item">
-            <span className="label"><span className="icon">👟</span> Daily Step Goal</span>
+            <span className="label"><span className="icon"><Footprints size={16} /></span> Daily Step Goal</span>
             <span className="value">{DEFAULT_STEP_GOAL.toLocaleString()}</span>
           </div>
         </div>
@@ -128,10 +155,12 @@ export default function Settings() {
         </p>
 
         {goalsError && (
-          <div className="export-error-banner">⚠️ {goalsError}</div>
+          <div className="export-error-banner" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <AlertTriangle size={14} /> {goalsError}
+          </div>
         )}
         {goalsMessage && (
-          <div style={{ color: '#4ade80', fontSize: 14, marginBottom: 12 }}>✓ {goalsMessage}</div>
+          <div style={{ color: '#4ade80', fontSize: 14, marginBottom: 12 }}>{goalsMessage}</div>
         )}
 
         <form onSubmit={handleSaveGoals} className="goals-form">
@@ -183,23 +212,24 @@ export default function Settings() {
         </form>
       </div>
 
+      {/* ── SCIENCE-BASED TDEE & MACRO CALCULATOR ── */}
+      <TDEECalculator />
+
       {/* ── PREFERENCES ── */}
       <div className="section-card">
         <h2 className="section-title">Preferences</h2>
         <div className="settings-list">
-          {[
-            { icon: '🔔', label: 'Notifications', value: 'Enabled' },
-            { icon: '🌙', label: 'Dark Mode',      value: 'Enabled' },
-            { icon: '🤖', label: 'AI Insights',    value: 'Enabled' },
-            { icon: '📱', label: 'PWA Install',    value: 'Available' },
-          ].map((item, i) => (
-            <div key={i} className="settings-item">
-              <span className="label">
-                <span className="icon">{item.icon}</span> {item.label}
-              </span>
-              <span className="badge">{item.value}</span>
-            </div>
-          ))}
+          {PREFERENCES.map((item, i) => {
+            const Icon = item.icon;
+            return (
+              <div key={i} className="settings-item">
+                <span className="label">
+                  <span className="icon"><Icon size={16} /></span> {item.label}
+                </span>
+                <span className="badge">{item.value}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -213,30 +243,34 @@ export default function Settings() {
         </p>
 
         {exportError && (
-          <div className="export-error-banner">
-            ⚠️ {exportError}
+          <div className="export-error-banner" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <AlertTriangle size={14} /> {exportError}
           </div>
         )}
 
         <div className="export-buttons-list">
-          {EXPORT_BUTTONS.map((btn) => (
-            <div key={btn.id} className="export-row">
-              <div className="export-row-info">
-                <span className="export-row-icon">{btn.icon}</span>
-                <div>
-                  <div className="export-row-label">{btn.label}</div>
-                  <div className="export-row-desc">{btn.desc}</div>
+          {EXPORT_BUTTONS.map((btn) => {
+            const Icon = btn.icon;
+            return (
+              <div key={btn.id} className="export-row">
+                <div className="export-row-info">
+                  <span className="export-row-icon"><Icon size={18} /></span>
+                  <div>
+                    <div className="export-row-label">{btn.label}</div>
+                    <div className="export-row-desc">{btn.desc}</div>
+                  </div>
                 </div>
+                <button
+                  className="export-download-btn"
+                  onClick={() => handleExport(btn)}
+                  disabled={exporting === btn.id}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  {exporting === btn.id ? 'Downloading…' : (<><Download size={14} /> Download</>)}
+                </button>
               </div>
-              <button
-                className="export-download-btn"
-                onClick={() => handleExport(btn)}
-                disabled={exporting === btn.id}
-              >
-                {exporting === btn.id ? 'Downloading…' : '⬇ Download'}
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -245,15 +279,15 @@ export default function Settings() {
         <h2 className="section-title">About</h2>
         <div className="settings-list">
           <div className="settings-item">
-            <span className="label"><span className="icon">🚀</span> Version</span>
+            <span className="label"><span className="icon"><Info size={16} /></span> Version</span>
             <span className="value">v{APP_VERSION}</span>
           </div>
           <div className="settings-item">
-            <span className="label"><span className="icon">🤖</span> AI Engine</span>
+            <span className="label"><span className="icon"><Cpu size={16} /></span> AI Engine</span>
             <span className="value">Gemini 3.7 Flash</span>
           </div>
           <div className="settings-item">
-            <span className="label"><span className="icon">⚡</span> Stack</span>
+            <span className="label"><span className="icon"><Layers size={16} /></span> Stack</span>
             <span className="value">React 19 · Express · PostgreSQL</span>
           </div>
         </div>
