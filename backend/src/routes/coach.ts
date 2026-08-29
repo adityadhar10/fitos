@@ -91,7 +91,9 @@ router.post('/chat', requireAuth, validate(chatSchema), async (req: AuthRequest,
             .join('\n')
         : 'No workouts logged in the last 7 days.';
 
-    const systemPrompt = `You are FitOS Coach, an elite, data-driven AI fitness intelligence assistant and personal trainer.
+    const systemPrompt = `CRITICAL RULE: Never use emoji, emoticons, or any decorative symbols anywhere in your response. Write in plain professional text only. This rule overrides any other stylistic instinct.
+
+You are FitOS Coach, an elite, data-driven AI fitness intelligence assistant and personal trainer.
 You give actionable, concise, science-backed fitness and nutrition advice tailored precisely to the user's real-time tracked data.
 
 === USER REAL-TIME HEALTH CONTEXT ===
@@ -110,7 +112,7 @@ ${recentWorkoutsSummary}
 === COACHING GUIDELINES ===
 1. Use the user's exact numbers when giving recommendations (e.g. "You have ${remProt}g of protein left today").
 2. When answering "What went wrong?" or plateau questions: analyze caloric balance, protein intake, sleep deficit, and workout frequency systematically.
-3. Structure responses with clear bullet points, bold key numbers, and helpful emoji.
+3. Structure responses with clear bullet points and bold key numbers. Do not use emoji anywhere in your response.
 4. Keep answers concise, highly practical, and motivating without unnecessary fluff.
 5. If suggesting meals, include approximate calories and protein for each suggestion.`;
 
@@ -144,30 +146,37 @@ ${recentWorkoutsSummary}
     if (!reply) {
       const lower = message.toLowerCase();
       if (lower.includes('wrong') || lower.includes('stall') || lower.includes('plateau') || lower.includes('progress')) {
-        reply = `🔍 **FitOS Diagnostic Analysis for ${user.name}:**\n\n` +
+        reply = `**FitOS Diagnostic Analysis for ${user.name}:**\n\n` +
           `• **Caloric Intake:** Logged **${totalCal} / ${user.calorieGoal} kcal** today.\n` +
           `• **Protein Target:** **${totalProt}g / ${user.proteinGoal}g** (${remProt}g remaining). Ensuring adequate protein protects muscle during fat loss.\n` +
           `• **Activity & Steps:** **${steps.toLocaleString()} steps** logged. Target at least 8,000–10,000 for steady energy expenditure.\n` +
           `• **Recovery:** **${sleep}h sleep**. Insufficient sleep elevates cortisol and causes fluid retention, masking fat loss.\n\n` +
-          `💡 **Action Step:** Focus on hitting your ${user.proteinGoal}g protein target and maintaining 7.5+ hours of sleep over the next 5 days.`;
+          `**Action Step:** Focus on hitting your ${user.proteinGoal}g protein target and maintaining 7.5+ hours of sleep over the next 5 days.`;
       } else if (lower.includes('eat') || lower.includes('dinner') || lower.includes('food') || lower.includes('meal')) {
-        reply = `🥗 **Recommended Meals for Remaining ${remProt}g Protein (${remCal} kcal left):**\n\n` +
+        reply = `**Recommended Meals for Remaining ${remProt}g Protein (${remCal} kcal left):**\n\n` +
           `1. **Grilled Chicken Breast (200g) + Veggies:** ~240 kcal, **46g protein**.\n` +
           `2. **Greek Yogurt (250g) + Scoop of Whey:** ~260 kcal, **40g protein**.\n` +
           `3. **Egg White Omelet (4 whites + 1 whole) & Cottage Cheese:** ~220 kcal, **32g protein**.\n\n` +
           `Which of these ingredients do you have on hand?`;
       } else if (lower.includes('workout') || lower.includes('exercise') || lower.includes('routine') || lower.includes('train')) {
-        reply = `🏋️ **Personalized Workout Recommendation for Today:**\n\n` +
+        reply = `️ **Personalized Workout Recommendation for Today:**\n\n` +
           `Based on your recent training volume:\n` +
           `• **Push Focus:** 4x Bench Press (8-10 reps), 3x Incline DB Press (10-12 reps), 3x Lateral Raises (15 reps), 3x Tricep Pushdowns (12-15 reps).\n` +
           `• **Rest Intervals:** 90s between heavy compounds, 60s for accessories.\n\n` +
           `Log this in the **Workout** tab and start the rest timer!`;
       } else {
-        reply = `Hey ${user.name}! 👋 You're currently at **${totalCal} / ${user.calorieGoal} kcal** with **${remProt}g protein** left to reach your daily goal. You've logged **${steps.toLocaleString()} steps** and **${water}ml water** today. How can I help you optimize your training, nutrition, or recovery?`;
+        reply = `Hey ${user.name}! You're currently at **${totalCal} / ${user.calorieGoal} kcal** with **${remProt}g protein** left to reach your daily goal. You've logged **${steps.toLocaleString()} steps** and **${water}ml water** today. How can I help you optimize your training, nutrition, or recovery?`;
       }
     }
 
-    res.json({ reply });
+    // Strip any emoji the model may have added despite instructions, ensuring a
+    // consistent, professional tone regardless of model behavior.
+    const cleanedReply = reply.replace(
+      /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]\s?/gu,
+      ''
+    );
+
+    res.json({ reply: cleanedReply });
   } catch (error) {
     console.error('Coach route error:', error);
     res.status(500).json({ error: 'Failed to process AI coach request.' });
