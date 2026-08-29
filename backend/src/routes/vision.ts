@@ -1,4 +1,4 @@
-import { lookupIngredient } from '../data/nutritionTable.js';
+import { resolveIngredient } from '../lib/resolveIngredient.js';
 
 import { Router, Response } from 'express';
 import { GoogleGenAI } from '@google/genai';
@@ -157,7 +157,7 @@ If you cannot identify the food perfectly, make your best reasonable estimate.
 
         raw = (result.text || '').trim();
 
-        console.log('Gemini vision response:', raw);
+        if (process.env.NODE_ENV !== 'production') console.log('Gemini vision response:', raw);
 
       } catch (apiErr: any) {
         console.error('Gemini vision error:', apiErr);
@@ -334,9 +334,14 @@ Break this meal down into a list of individual ingredients with their estimated 
 
 Important assumptions for Indian cooking, unless the user specifies otherwise:
 - If oil, ghee, or butter is mentioned without a quantity, assume exactly 21 grams (about 1.5 tablespoons) for a normal single-dish serving.
-- Curries, sabzis, and stir-fries almost always include cooking oil or ghee even if not explicitly stated — include it as an ingredient with 21 grams unless the user says "no oil", "dry roasted", "boiled", or similar.
+- Curries, sabzis, gravies, and stir-fries almost always include cooking oil or ghee even if not explicitly stated — include it as an ingredient with 21 grams unless the user says "no oil", "dry roasted", "boiled", or similar.
+- Do NOT add cooking oil as a separate ingredient for dishes described as "grilled", "baked", "steamed", "boiled", "raw", "roasted" (without oil mentioned), or salads — these cooking methods typically use little to no added oil unless the user explicitly mentions oil, butter, or ghee.
+- Only add oil/ghee as an assumed ingredient when the dish is clearly a wet-cooked Indian-style preparation (curry, sabzi, dal, stir-fry) or the user explicitly mentions oil/ghee/butter themselves.
 - "1 small bowl rice" should be treated as approximately 120 grams cooked rice.
 - "1 roti" or "1 chapati" should be treated as approximately 30 grams.
+- Cooked quinoa, rice, pasta, or other grains: if no quantity is given, assume a standard single serving of 180-200 grams cooked.
+- A whole avocado: if no quantity is given, assume 1 medium avocado = 150 grams.
+- Grilled/cooked fish or meat: if a weight is given (e.g. "200g salmon"), use that exact weight. If no weight is given, assume a standard single serving of 150-180 grams.
 - Spices/masalas contribute negligible weight and can be omitted from the list.
 - If the user gives an exact weight (e.g. "250 gm chicken breast"), use that exact number.
 
@@ -365,7 +370,7 @@ Use simple, generic ingredient names (e.g. "chicken breast", "cooking oil", "coo
         });
 
         raw = (result.text || '').trim();
-        console.log('Gemini ingredient response:', raw);
+        if (process.env.NODE_ENV !== 'production') console.log('Gemini ingredient response:', raw);
 
       } catch (apiErr: any) {
         console.error('Gemini text estimation error:', apiErr);
@@ -442,7 +447,7 @@ Use simple, generic ingredient names (e.g. "chicken breast", "cooking oil", "coo
       let matchedCount = 0;
 
       for (const ing of validated.data.ingredients) {
-        const ref = lookupIngredient(ing.name);
+        const ref = await resolveIngredient(ing.name);
         if (ref) {
           const factor = ing.grams / 100;
           totalCalories += ref.calories * factor;

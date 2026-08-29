@@ -29,6 +29,23 @@ export const nutritionTable: Record<string, NutritionPer100g> = {
   "mutton": { calories: 294, protein: 25, carbs: 0, fats: 21 },
   "chickpeas": { calories: 164, protein: 8.9, carbs: 27, fats: 2.6 },
   "kidney beans": { calories: 127, protein: 8.7, carbs: 22.8, fats: 0.5 },
+  "salmon": { calories: 208, protein: 20, carbs: 0, fats: 13 },
+  "quinoa": { calories: 120, protein: 4.4, carbs: 21.3, fats: 1.9 },
+  "avocado": { calories: 160, protein: 2, carbs: 8.5, fats: 14.7 },
+  "broccoli": { calories: 35, protein: 2.4, carbs: 7, fats: 0.4 },
+  "spinach": { calories: 23, protein: 2.9, carbs: 3.6, fats: 0.4 },
+  "sweet potato": { calories: 86, protein: 1.6, carbs: 20, fats: 0.1 },
+  "pasta": { calories: 131, protein: 5, carbs: 25, fats: 1.1 },
+  "beef": { calories: 250, protein: 26, carbs: 0, fats: 15 },
+  "shrimp": { calories: 99, protein: 24, carbs: 0.2, fats: 0.3 },
+  "tofu": { calories: 76, protein: 8, carbs: 1.9, fats: 4.8 },
+  "cheese": { calories: 402, protein: 25, carbs: 1.3, fats: 33 },
+  "almonds": { calories: 579, protein: 21, carbs: 22, fats: 50 },
+  "peanut butter": { calories: 588, protein: 25, carbs: 20, fats: 50 },
+  "bread": { calories: 265, protein: 9, carbs: 49, fats: 3.2 },
+  "banana": { calories: 89, protein: 1.1, carbs: 23, fats: 0.3 },
+  "apple": { calories: 52, protein: 0.3, carbs: 14, fats: 0.2 },
+  "oats": { calories: 389, protein: 17, carbs: 66, fats: 7 },
 };
 
 export function lookupIngredient(name: string): NutritionPer100g | null {

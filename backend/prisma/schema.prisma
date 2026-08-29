@@ -84,3 +84,14 @@ model DailyMetric {
 
   @@unique([userId, date])
 }
+
+model IngredientNutrition {
+  id         String   @id @default(uuid())
+  name       String   @unique
+  calories   Float
+  protein    Float
+  carbs      Float
+  fats       Float
+  source     String   @default("ai")
+  createdAt  DateTime @default(now())
+}
