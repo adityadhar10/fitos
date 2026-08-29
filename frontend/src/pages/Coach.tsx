@@ -21,6 +21,12 @@ const SUGGESTIONS: { icon: LucideIcon; label: string; text: string }[] = [
 
 export default function Coach() {
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (user?.id) {
+      localStorage.setItem(`fitos_visited_coach_${user.id}`, "true");
+    }
+  }, [user?.id]);
   const calorieGoal = user?.calorieGoal ?? DEFAULT_CALORIE_GOAL;
   const proteinGoal = user?.proteinGoal ?? DEFAULT_PROTEIN_GOAL;
 

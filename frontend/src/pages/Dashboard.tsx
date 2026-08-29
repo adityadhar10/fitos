@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "../index.css";
-import { getMeals, getTodayMetrics, updateTodayMetrics, getWeeklyMetrics, getInsight, getStreak } from "../services/api";
+import { getMeals, getTodayMetrics, updateTodayMetrics, getWeeklyMetrics, getInsight, getStreak, getWorkouts, getWeightHistory } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import {
   DEFAULT_CALORIE_GOAL,
@@ -12,6 +12,7 @@ import {
 import QuickActions from "../components/QuickActions";
 import TodayFocus from "../components/TodayFocus";
 import WaterTracker from "../components/WaterTracker";
+import GettingStartedChecklist from "../components/GettingStartedChecklist";
 import { Flame, Beef, Footprints, Moon, Bot, ArrowRight } from "lucide-react";
 
 interface WeeklyPoint {
@@ -40,6 +41,15 @@ export default function Dashboard() {
   const [weekly, setWeekly] = useState<WeeklyPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [streak, setStreak] = useState(0);
+  const [hasWorkout, setHasWorkout] = useState(false);
+  const [hasWeightEntry, setHasWeightEntry] = useState(false);
+  const [hasVisitedCoach, setHasVisitedCoach] = useState(false);
+
+  useEffect(() => {
+    if (user?.id) {
+      setHasVisitedCoach(localStorage.getItem(`fitos_visited_coach_${user.id}`) === "true");
+    }
+  }, [user?.id]);
 
   const [editingMetrics, setEditingMetrics] = useState(false);
   const [stepsInput, setStepsInput] = useState("");
@@ -52,12 +62,17 @@ export default function Dashboard() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [mealsRes, metricsRes, weeklyRes, streakRes] = await Promise.all([
+      const [mealsRes, metricsRes, weeklyRes, streakRes, workoutsRes, weightRes] = await Promise.all([
         getMeals(),
         getTodayMetrics(),
         getWeeklyMetrics(),
         getStreak(),
+        getWorkouts(),
+        getWeightHistory(),
       ]);
+
+      setHasWorkout((workoutsRes.data.workouts || []).length > 0);
+      setHasWeightEntry((weightRes.data.entries || []).length > 0);
 
       const meals = mealsRes.data.meals as { calories: number; protein: number }[];
       setTotalCalories(meals.reduce((sum, m) => sum + m.calories, 0));
@@ -186,6 +201,13 @@ export default function Dashboard() {
         </h1>
         <p>Your daily command center — score, goals, and what to do next.</p>
       </div>
+
+      <GettingStartedChecklist
+        hasMeal={totalCalories > 0}
+        hasWorkout={hasWorkout}
+        hasWeightEntry={hasWeightEntry}
+        hasVisitedCoach={hasVisitedCoach}
+      />
 
       <TodayFocus
         totalCalories={totalCalories}
