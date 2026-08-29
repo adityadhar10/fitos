@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { indianFoods } from "../data/indianFoods";
 
 interface FoodResult {
   name: string;
@@ -11,13 +12,15 @@ interface FoodResult {
 
 interface FoodSearchProps {
   onSelect: (food: FoodResult) => void;
+  onEstimateWithAI?: (query: string) => void;
 }
 
-export default function FoodSearch({ onSelect }: FoodSearchProps) {
+export default function FoodSearch({ onSelect, onEstimateWithAI }: FoodSearchProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<FoodResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [searchedApi, setSearchedApi] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -32,21 +35,43 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Debounced search
+  // Debounced search: local Indian foods first, then Open Food Facts
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);
       setOpen(false);
+      setSearchedApi(false);
       return;
     }
 
+    // 1. Check local Indian foods list first (instant, no network call)
+    const q = query.trim().toLowerCase();
+    const localMatches = indianFoods
+      .filter((f) => f.name.toLowerCase().includes(q))
+      .map((f) => ({
+        name: `${f.name} (${f.serving})`,
+        brand: "Indian food (local)",
+        calories: f.calories,
+        protein: f.protein,
+        carbs: f.carbs,
+        fats: f.fats,
+      }));
+
+    if (localMatches.length > 0) {
+      setResults(localMatches);
+      setOpen(true);
+      setSearchedApi(false);
+      return;
+    }
+
+    // 2. No local match — fall back to Open Food Facts (debounced)
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
       try {
         const res = await fetch(
-          `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=8&fields=product_name,brands,nutriments`
+          `/off-api/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=8&fields=product_name,brands,nutriments`
         );
         const data = await res.json();
 
@@ -67,6 +92,7 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
         setResults([]);
       } finally {
         setLoading(false);
+        setSearchedApi(true);
       }
     }, 450);
   }, [query]);
@@ -77,6 +103,11 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
     setOpen(false);
   };
 
+  const handleEstimateWithAI = () => {
+    onEstimateWithAI?.(query);
+    setOpen(false);
+  };
+
   return (
     <div className="food-search-wrapper" ref={wrapperRef}>
       <div className="food-search-input-row">
@@ -84,7 +115,7 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
         <input
           className="food-search-input"
           type="text"
-          placeholder="Search food database... (e.g. chicken breast, oats)"
+          placeholder="Search food database... (e.g. chicken breast, oats, roti)"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => results.length > 0 && setOpen(true)}
@@ -116,14 +147,32 @@ export default function FoodSearch({ onSelect }: FoodSearchProps) {
             </li>
           ))}
           <li className="food-search-footer">
-            per 100g · powered by Open Food Facts
+            per serving/100g · local + Open Food Facts
           </li>
         </ul>
       )}
 
-      {open && !loading && results.length === 0 && query.trim() && (
-        <div className="food-search-empty">
-          No results found. Enter details manually below.
+      {open && !loading && searchedApi && results.length === 0 && query.trim() && (
+        <div className="food-search-empty" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <span>No results found in database.</span>
+          {onEstimateWithAI && (
+            <button
+              type="button"
+              onMouseDown={handleEstimateWithAI}
+              style={{
+                background: "#163a24",
+                border: "1px solid #2d4535",
+                color: "#4ade80",
+                padding: "8px 12px",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontWeight: 600,
+                fontSize: 13,
+              }}
+            >
+              ✨ Estimate "{query}" with AI
+            </button>
+          )}
         </div>
       )}
     </div>

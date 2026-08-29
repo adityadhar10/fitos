@@ -1,3 +1,4 @@
+import { lookupIngredient } from '../data/nutritionTable.js';
 
 import { Router, Response } from 'express';
 import { GoogleGenAI } from '@google/genai';
@@ -311,7 +312,6 @@ router.post(
     try {
       const { description } = req.body;
 
-      // Check API key
       if (!process.env.GEMINI_API_KEY) {
         return res.status(500).json({
           error: 'AI service not configured.',
@@ -320,47 +320,39 @@ router.post(
       }
 
       // ─────────────────────────────────────────────────────────────────────
-      // Gemini model
+      // Step 1: Ask Gemini to identify ingredients + grams only (no math)
       // ─────────────────────────────────────────────────────────────────────
 
-      // model created inline in generateContent call below
-
       const prompt = `
-You are a precise nutrition estimation AI.
+You are a food-parsing AI specializing in Indian home cooking.
 
 The user ate:
 
 "${description}"
 
-Estimate the calories and macronutrients for a realistic standard portion.
+Break this meal down into a list of individual ingredients with their estimated weight in grams.
 
-Return ONLY valid JSON.
+Important assumptions for Indian cooking, unless the user specifies otherwise:
+- If oil, ghee, or butter is mentioned without a quantity, assume exactly 21 grams (about 1.5 tablespoons) for a normal single-dish serving.
+- Curries, sabzis, and stir-fries almost always include cooking oil or ghee even if not explicitly stated — include it as an ingredient with 21 grams unless the user says "no oil", "dry roasted", "boiled", or similar.
+- "1 small bowl rice" should be treated as approximately 120 grams cooked rice.
+- "1 roti" or "1 chapati" should be treated as approximately 30 grams.
+- Spices/masalas contribute negligible weight and can be omitted from the list.
+- If the user gives an exact weight (e.g. "250 gm chicken breast"), use that exact number.
 
-Do NOT use markdown.
-Do NOT use code fences.
-Do NOT add explanations.
+Return ONLY valid JSON. Do NOT use markdown or code fences. Do NOT add explanations.
 
-Return exactly:
+Return exactly this structure (array of ingredients):
 
 {
-  "calories": 500,
-  "protein": 25,
-  "carbs": 60,
-  "fats": 15,
-  "confidence": "medium"
+  "ingredients": [
+    { "name": "chicken breast", "grams": 250 },
+    { "name": "cooking oil", "grams": 21 },
+    { "name": "cooked rice", "grams": 120 }
+  ]
 }
 
-Rules:
-
-- calories must be an integer
-- protein must be an integer
-- carbs must be an integer
-- fats must be an integer
-- confidence must be one of:
-  high, medium, low
-
-Use standard nutritional knowledge.
-Be realistic about portion sizes.
+Use simple, generic ingredient names (e.g. "chicken breast", "cooking oil", "cooked rice", "roti", "paneer", "dal") so they can be matched against a standard nutrition database.
 `;
 
       let raw = '';
@@ -368,38 +360,16 @@ Be realistic about portion sizes.
       try {
         const result = await genAI.models.generateContent({
           model: 'gemini-3.5-flash-lite',
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                {
-                  text: prompt,
-                },
-              ],
-            },
-          ],
-          config: {
-            responseMimeType: 'application/json',
-          },
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          config: { responseMimeType: 'application/json' },
         });
 
         raw = (result.text || '').trim();
-
-        console.log(
-          'Gemini text response:',
-          raw
-        );
+        console.log('Gemini ingredient response:', raw);
 
       } catch (apiErr: any) {
-        console.error(
-          'Gemini text estimation error:',
-          apiErr
-        );
-
-        const message =
-          apiErr?.message ||
-          'Unknown Gemini API error';
-
+        console.error('Gemini text estimation error:', apiErr);
+        const message = apiErr?.message || 'Unknown Gemini API error';
         const status = apiErr?.status;
 
         if (
@@ -408,22 +378,20 @@ Be realistic about portion sizes.
           message.toLowerCase().includes('rate limit')
         ) {
           return res.status(429).json({
-            error:
-              'Gemini API quota exceeded. Please wait and try again.',
+            error: 'Gemini API quota exceeded. Please wait and try again.',
             details: message,
             retryAfter: 60,
           });
         }
 
         return res.status(500).json({
-          error:
-            'AI service unavailable. Please try again later.',
+          error: 'AI service unavailable. Please try again later.',
           details: message,
         });
       }
 
       // ─────────────────────────────────────────────────────────────────────
-      // Parse response
+      // Parse ingredient list
       // ─────────────────────────────────────────────────────────────────────
 
       let parsed: unknown;
@@ -436,87 +404,82 @@ Be realistic about portion sizes.
           .trim();
 
         parsed = JSON.parse(jsonStr);
-
       } catch {
-        console.error(
-          'Gemini returned invalid JSON:',
-          raw
-        );
-
+        console.error('Gemini returned invalid JSON:', raw);
         return res.status(500).json({
-          error:
-            'Could not estimate nutrition. Please enter values manually.',
+          error: 'Could not estimate nutrition. Please enter values manually.',
           details: 'Gemini returned invalid JSON.',
         });
       }
 
-      // ─────────────────────────────────────────────────────────────────────
-      // Validate response
-      // ─────────────────────────────────────────────────────────────────────
-
-      const responseSchema = z.object({
-        calories: z
-          .number()
-          .int()
-          .nonnegative(),
-
-        protein: z
-          .number()
-          .int()
-          .nonnegative(),
-
-        carbs: z
-          .number()
-          .int()
-          .nonnegative(),
-
-        fats: z
-          .number()
-          .int()
-          .nonnegative(),
-
-        confidence: z.enum([
-          'high',
-          'medium',
-          'low',
-        ] as const),
+      const ingredientSchema = z.object({
+        ingredients: z.array(
+          z.object({
+            name: z.string(),
+            grams: z.number().nonnegative(),
+          })
+        ),
       });
 
-      const validated =
-        responseSchema.safeParse(parsed);
+      const validated = ingredientSchema.safeParse(parsed);
 
       if (!validated.success) {
-        console.error(
-          'Invalid Gemini text response:',
-          validated.error
-        );
-
+        console.error('Invalid Gemini ingredient response:', validated.error);
         return res.status(500).json({
-          error: 'AI returned unexpected nutrition data.',
+          error: 'AI returned unexpected ingredient data.',
           details: validated.error.message,
         });
       }
 
-      return res.json({
-        estimate: validated.data,
-      });
+      // ─────────────────────────────────────────────────────────────────────
+      // Step 2: Deterministic calculation using the nutrition lookup table
+      // ─────────────────────────────────────────────────────────────────────
+
+      let totalCalories = 0;
+      let totalProtein = 0;
+      let totalCarbs = 0;
+      let totalFats = 0;
+      let matchedCount = 0;
+
+      for (const ing of validated.data.ingredients) {
+        const ref = lookupIngredient(ing.name);
+        if (ref) {
+          const factor = ing.grams / 100;
+          totalCalories += ref.calories * factor;
+          totalProtein += ref.protein * factor;
+          totalCarbs += ref.carbs * factor;
+          totalFats += ref.fats * factor;
+          matchedCount++;
+        }
+      }
+
+      const confidence: 'high' | 'medium' | 'low' =
+        matchedCount === validated.data.ingredients.length && matchedCount > 0
+          ? 'high'
+          : matchedCount > 0
+          ? 'medium'
+          : 'low';
+
+      const estimate = {
+        calories: Math.round(totalCalories),
+        protein: Math.round(totalProtein),
+        carbs: Math.round(totalCarbs),
+        fats: Math.round(totalFats),
+        confidence,
+      };
+
+      return res.json({ estimate, ingredients: validated.data.ingredients });
 
     } catch (error: any) {
-      console.error(
-        'Text estimate error:',
-        error
-      );
-
+      console.error('Text estimate error:', error);
       return res.status(500).json({
         error: 'Failed to estimate nutrition.',
-        details:
-          error?.message || 'Unknown server error.',
+        details: error?.message || 'Unknown server error.',
       });
     }
   }
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
 // GET /api/vision/barcode/:code (OpenFoodFacts lookup)
 // ─────────────────────────────────────────────────────────────────────────────
 

@@ -56,4 +56,13 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    proxy: {
+      '/off-api': {
+        target: 'https://world.openfoodfacts.org',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/off-api/, ''),
+      },
+    },
+  },
 });

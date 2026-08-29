@@ -48,6 +48,18 @@ export default function Nutrition() {
   const [protein, setProtein] = useState("");
   const [carbs, setCarbs] = useState("");
   const [fats, setFats] = useState("");
+  const [servings, setServings] = useState("1");
+  const [baseNutrition, setBaseNutrition] = useState<{ calories: number; protein: number; carbs: number; fats: number } | null>(null);
+  const [assumedIngredients, setAssumedIngredients] = useState<{ name: string; grams: number }[]>([]);
+
+  useEffect(() => {
+    if (!baseNutrition) return;
+    const multiplier = parseFloat(servings) || 1;
+    setCalories(String(Math.round(baseNutrition.calories * multiplier)));
+    setProtein(String(Math.round(baseNutrition.protein * multiplier)));
+    setCarbs(String(Math.round(baseNutrition.carbs * multiplier)));
+    setFats(String(Math.round(baseNutrition.fats * multiplier)));
+  }, [servings, baseNutrition]);
 
   const loadMeals = () => {
     setLoading(true);
@@ -83,16 +95,18 @@ export default function Nutrition() {
   const remainingCalories = Math.max(0, calorieGoal - totalCalories);
   const remainingProtein = Math.max(0, proteinGoal - totalProtein);
 
-  const handleEstimate = async () => {
-    if (!description.trim()) return;
+    const handleEstimate = async (textOverride?: string) => {
+    const textToEstimate = textOverride ?? description;
+    if (!textToEstimate.trim()) return;
     setEstimating(true);
     try {
-      const res = await estimateNutritionFromText(description);
+      const res = await estimateNutritionFromText(textToEstimate);
       const est = res.data.estimate;
       setCalories(String(est.calories));
       setProtein(String(est.protein));
       setCarbs(String(est.carbs));
       setFats(String(est.fats));
+      setAssumedIngredients(res.data.ingredients || []);
     } catch (err) {
       console.error("Failed to estimate nutrition:", err);
     } finally {
@@ -316,13 +330,21 @@ export default function Nutrition() {
               </button>
             </div>
 
-            <FoodSearch
+              <FoodSearch
               onSelect={(food) => {
                 setDescription(food.name);
-                setCalories(String(food.calories));
-                setProtein(String(food.protein));
-                setCarbs(String(food.carbs));
-                setFats(String(food.fats));
+                setServings("1");
+                setBaseNutrition({
+                  calories: food.calories,
+                  protein: food.protein,
+                  carbs: food.carbs,
+                  fats: food.fats,
+                });
+              }}
+              onEstimateWithAI={(query) => {
+                setDescription(query);
+                setBaseNutrition(null);
+                handleEstimate(query);
               }}
             />
 
@@ -362,7 +384,7 @@ export default function Nutrition() {
 
             <button
               type="button"
-              onClick={handleEstimate}
+              onClick={() => handleEstimate()}
               disabled={!description.trim() || estimating}
               style={{
                 background: "#163a24",
@@ -383,7 +405,48 @@ export default function Nutrition() {
               {estimating ? (<><Bot size={14} /> Estimating...</>) : (<><Sparkles size={14} /> Estimate calories & macros with AI</>)}
             </button>
 
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ fontSize: 11, color: "#7a8580", display: "block", marginBottom: 4 }}>Servings</label>
+                <input
+                  placeholder="1"
+                  type="number"
+                  min="0.25"
+                  step="0.25"
+                  value={servings}
+                  onChange={(e) => setServings(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: 10,
+                    background: "#080c0a",
+                    border: "1px solid #233027",
+                    color: "#fff",
+                    outline: "none",
+                  }}
+                />
+              </div>
+
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+                            <div style={{ marginBottom: 10 }}>
+                <label style={{ fontSize: 11, color: "#7a8580", display: "block", marginBottom: 4 }}>Servings</label>
+                <input
+                  placeholder="1"
+                  type="number"
+                  min="0.25"
+                  step="0.25"
+                  value={servings}
+                  onChange={(e) => setServings(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: 10,
+                    background: "#080c0a",
+                    border: "1px solid #233027",
+                    color: "#fff",
+                    outline: "none",
+                  }}
+                />
+              </div>
               <div>
                 <label style={{ fontSize: 11, color: "#7a8580", display: "block", marginBottom: 4 }}>Calories (kcal)*</label>
                 <input
@@ -458,6 +521,26 @@ export default function Nutrition() {
                 />
               </div>
             </div>
+
+            {assumedIngredients.length > 0 && (
+              <div style={{
+                background: "#0a110d",
+                border: "1px solid #1b2e21",
+                borderRadius: 10,
+                padding: "10px 14px",
+                fontSize: 12,
+                color: "#9da69f",
+              }}>
+                <strong style={{ color: "#4ade80", fontSize: 12 }}>AI assumed:</strong>{" "}
+                {assumedIngredients.map((ing, i) => (
+                  <span key={i}>
+                    {ing.grams}g {ing.name}
+                    {i < assumedIngredients.length - 1 ? ", " : ""}
+                  </span>
+                ))}
+                {" "}— adjust the fields above if any of this looks off.
+              </div>
+            )}
 
             <button className="primary-button" type="submit" disabled={saving} style={{ marginTop: 6 }}>
               {saving ? "Saving..." : "Save Meal"}
