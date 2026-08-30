@@ -305,18 +305,7 @@ export default function Nutrition() {
         )}
 
         {showForm && !scanMode && (
-          <form
-            onSubmit={handleAddMeal}
-            style={{
-              marginBottom: 24,
-              padding: 16,
-              background: "#0d1310",
-              borderRadius: 14,
-              border: "1px solid #202b23",
-              display: "grid",
-              gap: 12,
-            }}
-          >
+          <form onSubmit={handleAddMeal} className="meal-form" style={{ marginBottom: 24 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: "#9da69f", display: "flex", alignItems: "center", gap: 6 }}>
                 {description && calories ? (<><Sparkles size={13} /> Review & Log Meal</>) : "Log a Meal"}
@@ -352,14 +341,6 @@ export default function Nutrition() {
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value)}
-                style={{
-                  padding: "10px 12px",
-                  borderRadius: 10,
-                  background: "#080c0a",
-                  border: "1px solid #233027",
-                  color: "#fff",
-                  outline: "none",
-                }}
               >
                 <option value="Breakfast">Breakfast</option>
                 <option value="Lunch">Lunch</option>
@@ -371,14 +352,6 @@ export default function Nutrition() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: 10,
-                  background: "#080c0a",
-                  border: "1px solid #233027",
-                  color: "#fff",
-                  outline: "none",
-                }}
               />
             </div>
 
@@ -414,39 +387,10 @@ export default function Nutrition() {
                   step="0.25"
                   value={servings}
                   onChange={(e) => setServings(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px",
-                    borderRadius: 10,
-                    background: "#080c0a",
-                    border: "1px solid #233027",
-                    color: "#fff",
-                    outline: "none",
-                  }}
                 />
               </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-                            <div style={{ marginBottom: 10 }}>
-                <label style={{ fontSize: 11, color: "#7a8580", display: "block", marginBottom: 4 }}>Servings</label>
-                <input
-                  placeholder="1"
-                  type="number"
-                  min="0.25"
-                  step="0.25"
-                  value={servings}
-                  onChange={(e) => setServings(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px",
-                    borderRadius: 10,
-                    background: "#080c0a",
-                    border: "1px solid #233027",
-                    color: "#fff",
-                    outline: "none",
-                  }}
-                />
-              </div>
               <div>
                 <label style={{ fontSize: 11, color: "#7a8580", display: "block", marginBottom: 4 }}>Calories (kcal)*</label>
                 <input
@@ -455,15 +399,6 @@ export default function Nutrition() {
                   value={calories}
                   onChange={(e) => setCalories(e.target.value)}
                   required
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px",
-                    borderRadius: 10,
-                    background: "#080c0a",
-                    border: "1px solid #233027",
-                    color: "#fff",
-                    outline: "none",
-                  }}
                 />
               </div>
               <div>
@@ -473,15 +408,6 @@ export default function Nutrition() {
                   type="number"
                   value={protein}
                   onChange={(e) => setProtein(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px",
-                    borderRadius: 10,
-                    background: "#080c0a",
-                    border: "1px solid #233027",
-                    color: "#fff",
-                    outline: "none",
-                  }}
                 />
               </div>
               <div>
@@ -491,15 +417,6 @@ export default function Nutrition() {
                   type="number"
                   value={carbs}
                   onChange={(e) => setCarbs(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px",
-                    borderRadius: 10,
-                    background: "#080c0a",
-                    border: "1px solid #233027",
-                    color: "#fff",
-                    outline: "none",
-                  }}
                 />
               </div>
               <div>
@@ -509,15 +426,6 @@ export default function Nutrition() {
                   type="number"
                   value={fats}
                   onChange={(e) => setFats(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px",
-                    borderRadius: 10,
-                    background: "#080c0a",
-                    border: "1px solid #233027",
-                    color: "#fff",
-                    outline: "none",
-                  }}
                 />
               </div>
             </div>
@@ -628,13 +536,13 @@ export default function Nutrition() {
                       </h3>
                     </div>
                     <div style={{ display: "flex", gap: 6, marginTop: 5, flexWrap: "wrap" }}>
-                      <span style={{ fontSize: 11, color: "#9da69f", background: "#131b16", padding: "2px 6px", borderRadius: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                      <span className="macro-badge">
                         <span style={{ color: "#4ade80" }}>●</span> P: {meal.protein}g
                       </span>
-                      <span style={{ fontSize: 11, color: "#9da69f", background: "#131b16", padding: "2px 6px", borderRadius: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                      <span className="macro-badge">
                         <span style={{ color: "#38bdf8" }}>●</span> C: {meal.carbs}g
                       </span>
-                      <span style={{ fontSize: 11, color: "#9da69f", background: "#131b16", padding: "2px 6px", borderRadius: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                      <span className="macro-badge">
                         <span style={{ color: "#fbbf24" }}>●</span> F: {meal.fats}g
                       </span>
                     </div>
