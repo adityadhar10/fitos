@@ -6,3 +6,4 @@ generated/
 server.log
 dist
 backend_log.txt
+*_debug.txt
