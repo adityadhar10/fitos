@@ -59,4 +59,5 @@ src/
 
 - **Auth**: `frontend/src/context/AuthContext.tsx` ↔ `backend/src/routes/auth.ts`
 - **Nutrition**: `frontend/src/pages/Nutrition.tsx` ↔ `backend/src/routes/meals.ts` + `backend/src/routes/vision.ts` (AI estimation)
+  - See `docs/NUTRITION_AI_ARCHITECTURE.md` for how the AI nutrition estimation system works
 - **Workouts**: `frontend/src/pages/Workout.tsx` ↔ `backend/src/routes/workouts.ts` + `backend/src/routes/routines.ts`
