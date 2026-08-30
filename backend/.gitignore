@@ -5,3 +5,4 @@ generated/
 *.save
 server.log
 dist
+backend_log.txt
