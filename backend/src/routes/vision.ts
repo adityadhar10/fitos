@@ -57,125 +57,84 @@ router.post(
     try {
       const { imageBase64, mimeType } = req.body;
 
-      // Check API key
       if (!process.env.GEMINI_API_KEY) {
         console.error('GEMINI_API_KEY is not configured');
-
         return res.status(500).json({
           error: 'AI service not configured.',
           details: 'GEMINI_API_KEY is missing.',
         });
       }
 
-      // Rate limit
       if (visionRateLimiter.isRateLimited()) {
         return res.status(429).json({
-          error:
-            'Rate limit exceeded. Please wait 1 minute between AI scans.',
+          error: 'Rate limit exceeded. Please wait 1 minute between AI scans.',
           retryAfter: 60,
         });
       }
 
       // ─────────────────────────────────────────────────────────────────────
-      // Prompt
+      // Step 1: Ask Gemini to identify ingredients + grams from the image
+      // (same approach as text-based estimation, for consistent results)
       // ─────────────────────────────────────────────────────────────────────
 
       const prompt = `
-You are a precise nutrition analysis AI.
+You are a food-parsing AI specializing in identifying meals from photos, including Indian home cooking.
 
-Analyze the food in this image.
+Look at this food image and break it down into a list of individual ingredients with their estimated weight in grams, plus a brief description and likely meal type.
 
-Estimate the food items, portion size, calories and macronutrients.
+Important assumptions for Indian cooking, unless clearly visible otherwise:
+- If the dish appears to be a curry, sabzi, gravy, or stir-fry, assume it includes approximately 21 grams of cooking oil or ghee unless it clearly looks dry-roasted, boiled, or oil-free.
+- Do NOT add cooking oil separately for dishes that appear grilled, baked, steamed, boiled, raw, or roasted without visible oil.
+- Fried breads (poori, bhature, etc.) should account for the oil absorbed during frying as part of their own weight/calorie density, not as a separate oil ingredient.
+- Use realistic Indian household portion sizes for rice, roti, curries, and sides.
 
-Return ONLY valid JSON.
-
-Do NOT use markdown.
-Do NOT use code fences.
-Do NOT add explanations.
+Return ONLY valid JSON. Do NOT use markdown or code fences. Do NOT add explanations.
 
 Return exactly this structure:
 
 {
   "description": "Brief description of the food",
-  "calories": 500,
-  "protein": 25,
-  "carbs": 60,
-  "fats": 15,
   "mealType": "lunch",
-  "confidence": "medium"
+  "ingredients": [
+    { "name": "chole (chickpea curry)", "grams": 200 },
+    { "name": "bhature", "grams": 150 }
+  ]
 }
 
 Rules:
-
-- calories must be an integer
-- protein must be an integer
-- carbs must be an integer
-- fats must be an integer
-- mealType must be one of:
-  breakfast, lunch, dinner, snack
-- confidence must be one of:
-  high, medium, low
-
-Estimate a realistic portion size from the image.
-
-If you cannot identify the food perfectly, make your best reasonable estimate.
+- mealType must be one of: breakfast, lunch, dinner, snack
+- Use simple, generic ingredient names so they can be matched against a standard nutrition database (e.g. "chole", "bhature", "roti", "paneer", "rice", "dal", "chicken curry").
+- If you cannot identify the food perfectly, make your best reasonable estimate.
 `;
 
-      // ─────────────────────────────────────────────────────────────────────
-      // Image data
-      // ─────────────────────────────────────────────────────────────────────
-
       const imagePart = {
-        inlineData: {
-          mimeType,
-          data: imageBase64,
-        },
+        inlineData: { mimeType, data: imageBase64 },
       };
 
       let raw = '';
 
       try {
-        // IMPORTANT:
-        // Use a current multimodal Gemini model.
         const result = await genAI.models.generateContent({
           model: 'gemini-3.5-flash-lite',
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                {
-                  text: prompt,
-                },
-                imagePart,
-              ],
-            },
-          ],
-          config: {
-            responseMimeType: 'application/json',
-          },
+          contents: [{ role: 'user', parts: [{ text: prompt }, imagePart] }],
+          config: { responseMimeType: 'application/json' },
         });
 
         raw = (result.text || '').trim();
-
-        if (process.env.NODE_ENV !== 'production') console.log('Gemini vision response:', raw);
+        if (process.env.NODE_ENV !== 'production') console.log('Gemini vision ingredient response:', raw);
 
       } catch (apiErr: any) {
         console.error('Gemini vision error:', apiErr);
-
-        const message =
-          apiErr?.message || 'Unknown Gemini API error';
-
+        const message = apiErr?.message || 'Unknown Gemini API error';
         const status = apiErr?.status;
 
-        // Quota / rate limit
         if (
           status === 429 ||
           message.toLowerCase().includes('quota') ||
           message.toLowerCase().includes('rate limit')
         ) {
           return res.status(429).json({
-            error:
-              'Gemini API quota exceeded. Please wait and try again.',
+            error: 'Gemini API quota exceeded. Please wait and try again.',
             details: message,
             retryAfter: 60,
           });
@@ -188,7 +147,7 @@ If you cannot identify the food perfectly, make your best reasonable estimate.
       }
 
       // ─────────────────────────────────────────────────────────────────────
-      // Parse Gemini response
+      // Parse ingredient list
       // ─────────────────────────────────────────────────────────────────────
 
       let parsed: unknown;
@@ -201,100 +160,87 @@ If you cannot identify the food perfectly, make your best reasonable estimate.
           .trim();
 
         parsed = JSON.parse(jsonStr);
-
       } catch {
-        console.error(
-          'Gemini returned invalid JSON:',
-          raw
-        );
-
+        console.error('Gemini returned invalid JSON:', raw);
         return res.status(500).json({
-          error:
-            'AI could not understand the food image. Please try a clearer photo.',
+          error: 'AI could not understand the food image. Please try a clearer photo.',
           details: 'Gemini returned invalid JSON.',
         });
       }
 
-      // ─────────────────────────────────────────────────────────────────────
-      // Validate Gemini response
-      // ─────────────────────────────────────────────────────────────────────
-
-      const responseSchema = z.object({
+      const imageIngredientSchema = z.object({
         description: z.string(),
-
-        calories: z
-          .number()
-          .int()
-          .nonnegative(),
-
-        protein: z
-          .number()
-          .int()
-          .nonnegative(),
-
-        carbs: z
-          .number()
-          .int()
-          .nonnegative(),
-
-        fats: z
-          .number()
-          .int()
-          .nonnegative(),
-
-        mealType: z.enum([
-          'breakfast',
-          'lunch',
-          'dinner',
-          'snack',
-        ] as const),
-
-        confidence: z.enum([
-          'high',
-          'medium',
-          'low',
-        ] as const),
+        mealType: z.enum(['breakfast', 'lunch', 'dinner', 'snack'] as const),
+        ingredients: z.array(
+          z.object({
+            name: z.string(),
+            grams: z.number().nonnegative(),
+          })
+        ),
       });
 
-      const validated =
-        responseSchema.safeParse(parsed);
+      const validated = imageIngredientSchema.safeParse(parsed);
 
       if (!validated.success) {
-        console.error(
-          'Invalid Gemini vision response:',
-          validated.error
-        );
-
+        console.error('Invalid Gemini vision response:', validated.error);
         return res.status(500).json({
-          error: 'AI returned unexpected nutrition data.',
+          error: 'AI returned unexpected food data.',
           details: validated.error.message,
         });
       }
 
       // ─────────────────────────────────────────────────────────────────────
-      // Send result
+      // Step 2: Deterministic calculation using the nutrition lookup system
+      // (same resolveIngredient() used by text-based estimation)
       // ─────────────────────────────────────────────────────────────────────
 
-      return res.json({
-        analysis: validated.data,
-      });
+      let totalCalories = 0;
+      let totalProtein = 0;
+      let totalCarbs = 0;
+      let totalFats = 0;
+      let matchedCount = 0;
+
+      for (const ing of validated.data.ingredients) {
+        const ref = await resolveIngredient(ing.name);
+        if (ref) {
+          const factor = ing.grams / 100;
+          totalCalories += ref.calories * factor;
+          totalProtein += ref.protein * factor;
+          totalCarbs += ref.carbs * factor;
+          totalFats += ref.fats * factor;
+          matchedCount++;
+        }
+      }
+
+      const confidence: 'high' | 'medium' | 'low' =
+        matchedCount === validated.data.ingredients.length && matchedCount > 0
+          ? 'high'
+          : matchedCount > 0
+          ? 'medium'
+          : 'low';
+
+      const analysis = {
+        description: validated.data.description,
+        calories: Math.round(totalCalories),
+        protein: Math.round(totalProtein),
+        carbs: Math.round(totalCarbs),
+        fats: Math.round(totalFats),
+        mealType: validated.data.mealType,
+        confidence,
+      };
+
+      return res.json({ analysis, ingredients: validated.data.ingredients });
 
     } catch (error: any) {
-      console.error(
-        'Vision analyze error:',
-        error
-      );
-
+      console.error('Vision analyze error:', error);
       return res.status(500).json({
         error: 'Failed to analyze food image.',
-        details:
-          error?.message || 'Unknown server error.',
+        details: error?.message || 'Unknown server error.',
       });
     }
   }
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
 // POST /api/vision/estimate-text
 // ─────────────────────────────────────────────────────────────────────────────
 

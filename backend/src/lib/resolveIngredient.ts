@@ -13,15 +13,39 @@ const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 export async function resolveIngredient(name: string): Promise<NutritionPer100g | null> {
   const key = name.trim().toLowerCase();
 
-  // 1. Check database cache first
+  // 1. Check database cache first (exact match, then fuzzy substring match)
   try {
-    const cached = await prisma.ingredientNutrition.findUnique({ where: { name: key } });
-    if (cached) {
+    const exact = await prisma.ingredientNutrition.findUnique({ where: { name: key } });
+    if (exact) {
       return {
-        calories: cached.calories,
-        protein: cached.protein,
-        carbs: cached.carbs,
-        fats: cached.fats,
+        calories: exact.calories,
+        protein: exact.protein,
+        carbs: exact.carbs,
+        fats: exact.fats,
+      };
+    }
+
+    // Normalize by stripping parenthetical notes, e.g. "chole (chickpea curry)" -> "chole"
+    const normalizedKey = key.replace(/\s*\([^)]*\)\s*/g, '').trim();
+
+    const allCached = await prisma.ingredientNutrition.findMany();
+    const fuzzyMatch = allCached.find((row) => {
+      const normalizedRow = row.name.replace(/\s*\([^)]*\)\s*/g, '').trim();
+      return (
+        normalizedRow === normalizedKey ||
+        key.includes(row.name) ||
+        row.name.includes(key) ||
+        normalizedKey.includes(normalizedRow) ||
+        normalizedRow.includes(normalizedKey)
+      );
+    });
+
+    if (fuzzyMatch) {
+      return {
+        calories: fuzzyMatch.calories,
+        protein: fuzzyMatch.protein,
+        carbs: fuzzyMatch.carbs,
+        fats: fuzzyMatch.fats,
       };
     }
   } catch (err) {

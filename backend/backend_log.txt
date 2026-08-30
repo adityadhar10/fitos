@@ -1,0 +1,11 @@
+
+> backend@1.0.0 dev
+> tsx watch src/server.ts
+
+◇ injected env (5) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+◇ injected env (0) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+🚀 FitOS v2.0 running on port 5001
+12:06:34 pm [tsx] change in ./src/lib/resolveIngredient.ts Rerunning...
+◇ injected env (5) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+🚀 FitOS v2.0 running on port 5001
