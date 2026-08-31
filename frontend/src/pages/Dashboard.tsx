@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "../index.css";
-import { getMeals, getTodayMetrics, updateTodayMetrics, getWeeklyMetrics, getInsight, getStreak, getWorkouts, getWeightHistory } from "../services/api";
+import { getMeals, getTodayMetrics, getWeeklyMetrics, getInsight, getStreak, getWorkouts, getWeightHistory } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import {
   DEFAULT_CALORIE_GOAL,
@@ -9,9 +9,7 @@ import {
   DEFAULT_STEP_GOAL,
   DEFAULT_SLEEP_GOAL,
 } from "../constants/goals";
-import QuickActions from "../components/QuickActions";
 import TodayFocus from "../components/TodayFocus";
-import WaterTracker from "../components/WaterTracker";
 import GettingStartedChecklist from "../components/GettingStartedChecklist";
 import { Flame, Beef, Footprints, Moon, Bot, ArrowRight } from "lucide-react";
 
@@ -37,7 +35,6 @@ export default function Dashboard() {
   const [totalProtein, setTotalProtein] = useState(0);
   const [steps, setSteps] = useState(0);
   const [sleepHours, setSleepHours] = useState(0);
-  const [waterMl, setWaterMl] = useState(0);
   const [weekly, setWeekly] = useState<WeeklyPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [streak, setStreak] = useState(0);
@@ -51,9 +48,6 @@ export default function Dashboard() {
     }
   }, [user?.id]);
 
-  const [editingMetrics, setEditingMetrics] = useState(false);
-  const [stepsInput, setStepsInput] = useState("");
-  const [sleepInput, setSleepInput] = useState("");
   const [saving, setSaving] = useState(false);
 
   const [aiInsight, setAiInsight] = useState<string | null>(null);
@@ -80,7 +74,6 @@ export default function Dashboard() {
 
       setSteps(metricsRes.data.metric.steps || 0);
       setSleepHours(metricsRes.data.metric.sleepHours || 0);
-      setWaterMl(metricsRes.data.metric.waterMl || 0);
       setStreak(streakRes.data.streak ?? 0);
 
       const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -130,26 +123,6 @@ export default function Dashboard() {
   );
 
   const maxWeeklySteps = Math.max(5000, ...weekly.map((w) => w.steps));
-
-  const handleSaveMetrics = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      await updateTodayMetrics(
-        stepsInput ? Number(stepsInput) : undefined,
-        sleepInput ? Number(sleepInput) : undefined
-      );
-      setStepsInput("");
-      setSleepInput("");
-      setEditingMetrics(false);
-      loadAll();
-      loadInsight();
-    } catch (err) {
-      console.error("Failed to update metrics:", err);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const STATS_DATA = [
     {
@@ -220,8 +193,6 @@ export default function Dashboard() {
         sleepGoal={DEFAULT_SLEEP_GOAL}
         loading={loading}
       />
-
-      <QuickActions />
 
       <div className="fitness-score">
         <div className="fitness-score-left">
@@ -360,64 +331,6 @@ export default function Dashboard() {
         >
           <span>Open Coach Chat</span> <ArrowRight size={14} />
         </Link>
-      </div>
-
-      <WaterTracker
-        initialWater={waterMl}
-        dailyGoal={3000}
-        onWaterChange={(w) => setWaterMl(w)}
-      />
-
-      <div className="section-card">
-        <div className="section-header">
-          <h2>Update Steps & Sleep</h2>
-          <button className="action-btn" onClick={() => setEditingMetrics((s) => !s)}>
-            {editingMetrics ? "Cancel" : "Edit"}
-          </button>
-        </div>
-
-        {editingMetrics && (
-          <form onSubmit={handleSaveMetrics} style={{ display: "flex", gap: 8 }}>
-            <input
-              placeholder="Steps"
-              type="number"
-              value={stepsInput}
-              onChange={(e) => setStepsInput(e.target.value)}
-              style={{
-                padding: "10px 14px",
-                borderRadius: 10,
-                flex: 1,
-                background: "#0f1511",
-                border: "1px solid #252d28",
-                color: "#fff",
-                fontSize: 14,
-                fontFamily: "inherit",
-                outline: "none",
-              }}
-            />
-            <input
-              placeholder="Sleep (hrs)"
-              type="number"
-              step="0.1"
-              value={sleepInput}
-              onChange={(e) => setSleepInput(e.target.value)}
-              style={{
-                padding: "10px 14px",
-                borderRadius: 10,
-                flex: 1,
-                background: "#0f1511",
-                border: "1px solid #252d28",
-                color: "#fff",
-                fontSize: 14,
-                fontFamily: "inherit",
-                outline: "none",
-              }}
-            />
-            <button className="primary-button" type="submit" disabled={saving}>
-              {saving ? "Saving..." : "Save"}
-            </button>
-          </form>
-        )}
       </div>
 
       <div className="weekly-chart">
