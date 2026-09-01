@@ -48,8 +48,6 @@ export default function Dashboard() {
     }
   }, [user?.id]);
 
-  const [saving, setSaving] = useState(false);
-
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [insightLoading, setInsightLoading] = useState(true);
 
@@ -168,224 +166,243 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard page-enter">
+      {/* Top Header */}
       <div className="dashboard-header">
-        <h1>
-          {getGreeting()}{user?.name ? `, ${user.name.split(" ")[0]}` : ""}
-        </h1>
-        <p>Your daily command center — score, goals, and what to do next.</p>
-      </div>
-
-      <GettingStartedChecklist
-        hasMeal={totalCalories > 0}
-        hasWorkout={hasWorkout}
-        hasWeightEntry={hasWeightEntry}
-        hasVisitedCoach={hasVisitedCoach}
-      />
-
-      <TodayFocus
-        totalCalories={totalCalories}
-        calorieGoal={calorieGoal}
-        totalProtein={totalProtein}
-        proteinGoal={proteinGoal}
-        steps={steps}
-        stepGoal={DEFAULT_STEP_GOAL}
-        sleepHours={sleepHours}
-        sleepGoal={DEFAULT_SLEEP_GOAL}
-        loading={loading}
-      />
-
-      <div className="fitness-score">
-        <div className="fitness-score-left">
-          <div className="fitness-score-header">
-            <h2>FITNESS SCORE</h2>
-          </div>
-          <div className="score-ring">
-            <svg viewBox="0 0 140 140">
-              <circle className="bg" cx="70" cy="70" r="60" />
-              <circle
-                className="progress"
-                cx="70"
-                cy="70"
-                r="60"
-                style={{
-                  strokeDashoffset: 377 - (fitnessScore / 100) * 377,
-                }}
-              />
-            </svg>
-            <div className="score-number">
-              <strong>{loading ? "-" : fitnessScore}</strong>
-              <span>/ 100</span>
-            </div>
-          </div>
-          {streak > 0 && (
-            <div className="streak-badge">
-              {streak}-day streak
-            </div>
-          )}
+        <div className="dashboard-header-left">
+          <h1>
+            {getGreeting()}{user?.name ? `, ${user.name.split(" ")[0]}` : ""}
+          </h1>
+          <p className="dashboard-subtitle">Your daily health metrics, targets, and personalized actions.</p>
         </div>
-
-        <div className="fitness-score-right">
-          <h2>Score Breakdown</h2>
-          <div className="score-breakdown">
-            {SCORE_BARS.map((bar) => (
-              <div key={bar.label} className="score-bar-row">
-                <span className="score-bar-label">{bar.label}</span>
-                <div className="score-bar-track">
-                  <div
-                    className={`score-bar-fill ${bar.cls}`}
-                    style={{ width: loading ? "0%" : `${bar.pct}%` }}
-                  />
-                </div>
-                <span className="score-bar-value">{loading ? "-" : `${bar.pct}%`}</span>
-              </div>
-            ))}
+        {streak > 0 && (
+          <div className="dashboard-streak-pill">
+            <span className="streak-dot" />
+            <span>{streak}-day active streak</span>
           </div>
-        </div>
-      </div>
-
-      <div className="stats-grid">
-        {STATS_DATA.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div key={stat.id} className="stat-card">
-              <div className="stat-title">
-                <span className="stat-icon"><Icon size={16} /></span> {stat.label}
-              </div>
-              <div className="stat-value">
-                {loading ? (
-                  <div className="skeleton skeleton-number" />
-                ) : (
-                  <>
-                    <strong>{stat.value}</strong>
-                    <span>{stat.target}</span>
-                  </>
-                )}
-              </div>
-              <div className="stat-progress">
-                <div
-                  className="stat-progress-fill"
-                  style={{ width: loading ? "0%" : `${stat.pct}%` }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div
-        className="section-card"
-        style={{
-          background: "linear-gradient(135deg, #0e1c14 0%, #0d1511 100%)",
-          border: "1px solid #1f3827",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: 14,
-          padding: "16px 20px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 12,
-              background: "#152a1e",
-              border: "1px solid #254a34",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              color: "#4ade80",
-            }}
-          >
-            <Bot size={22} />
-          </div>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#ffffff" }}>FitOS AI Coach Studio</h2>
-              <span style={{ fontSize: 11, background: "#1b3824", color: "#4ade80", padding: "2px 8px", borderRadius: 6, fontWeight: 700 }}>
-                24/7 ADVISOR
-              </span>
-            </div>
-            <p className="subtext" style={{ margin: "2px 0 0 0", fontSize: 13 }}>
-              Ask personalized questions, get meal ideas for remaining macros, and diagnose stalls.
-            </p>
-          </div>
-        </div>
-
-        <Link
-          to="/coach"
-          className="primary-button"
-          style={{
-            padding: "10px 18px",
-            fontSize: 13,
-            fontWeight: 700,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            textDecoration: "none",
-            borderRadius: 10,
-          }}
-        >
-          <span>Open Coach Chat</span> <ArrowRight size={14} />
-        </Link>
-      </div>
-
-      <div className="weekly-chart">
-        <div className="weekly-chart-header">
-          <div>
-            <h2>Weekly Activity</h2>
-            <p>Steps over the last 7 days</p>
-          </div>
-          {activeDaysCount > 0 && (
-            <span style={{ color: "#4ade80", fontSize: 13, fontWeight: 600 }}>
-              {activeDaysCount}/7 active days
-            </span>
-          )}
-        </div>
-
-        <div className="chart-area">
-          <div className="chart-y-axis">
-            <span>{Math.round(maxWeeklySteps / 1000)}k</span>
-            <span>{Math.round((maxWeeklySteps * 0.75) / 1000)}k</span>
-            <span>{Math.round((maxWeeklySteps * 0.5) / 1000)}k</span>
-            <span>{Math.round((maxWeeklySteps * 0.25) / 1000)}k</span>
-            <span>0</span>
-          </div>
-
-          <div className="chart-content">
-            <div className="chart-grid">
-              <div /><div /><div /><div /><div />
-            </div>
-
-            <div className="bars">
-              {weekly.map((item, i) => (
-                <div key={i} className="bar-column">
-                  <div
-                    className="activity-bar"
-                    style={{ height: `${Math.min(100, (item.steps / maxWeeklySteps) * 100)}%` }}
-                  />
-                  <span>{item.day}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="ai-insight">
-        <h2>AI Insight</h2>
-        {insightLoading ? (
-          <>
-            <div className="skeleton skeleton-text wide" style={{ marginBottom: 6 }} />
-            <div className="skeleton skeleton-text" />
-          </>
-        ) : (
-          <p>{aiInsight || "No insight available right now."}</p>
         )}
       </div>
+
+      {/* TIER 1: Current Status Overview (Fitness Score + Key Stats) */}
+      <section className="dashboard-section">
+        <div className="section-header">
+          <h2 className="section-title">Current Status</h2>
+        </div>
+        <div className="dashboard-status-grid">
+          {/* Main Fitness Score Card */}
+          <div className="fitness-score-hero-card">
+            <div className="hero-card-header">
+              <div className="hero-card-title-group">
+                <span className="card-kicker">OVERALL HEALTH</span>
+                <h3 className="hero-card-title">Fitness Score</h3>
+              </div>
+              <span className="score-summary-badge">
+                {fitnessScore >= 80 ? "Optimal" : fitnessScore >= 50 ? "On Track" : "In Progress"}
+              </span>
+            </div>
+
+            <div className="hero-score-content">
+              <div className="score-ring">
+                <svg viewBox="0 0 140 140">
+                  <circle className="bg" cx="70" cy="70" r="58" />
+                  <circle
+                    className="progress"
+                    cx="70"
+                    cy="70"
+                    r="58"
+                    style={{
+                      strokeDashoffset: 364 - (fitnessScore / 100) * 364,
+                    }}
+                  />
+                </svg>
+                <div className="score-number">
+                  <strong>{loading ? "-" : fitnessScore}</strong>
+                  <span>/ 100</span>
+                </div>
+              </div>
+
+              <div className="score-breakdown-container">
+                <div className="score-breakdown-title">Score Composition</div>
+                <div className="score-breakdown">
+                  {SCORE_BARS.map((bar) => (
+                    <div key={bar.label} className="score-bar-row">
+                      <span className="score-bar-label">{bar.label}</span>
+                      <div className="score-bar-track">
+                        <div
+                          className={`score-bar-fill ${bar.cls}`}
+                          style={{ width: loading ? "0%" : `${Math.min(100, bar.pct)}%` }}
+                        />
+                      </div>
+                      <span className="score-bar-value">{loading ? "-" : `${bar.pct}%`}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 4 Key Metric Cards (2x2 Grid) */}
+          <div className="stats-metric-grid">
+            {STATS_DATA.map((stat) => {
+              const Icon = stat.icon;
+              const pctInt = Math.round(stat.pct);
+              return (
+                <div key={stat.id} className="stat-metric-card">
+                  <div className="stat-card-top">
+                    <div className="stat-label-group">
+                      <span className="stat-icon-wrap"><Icon size={15} /></span>
+                      <span className="stat-card-label">{stat.label}</span>
+                    </div>
+                    <span className="stat-pct-badge">{loading ? "--" : `${pctInt}%`}</span>
+                  </div>
+
+                  <div className="stat-card-value">
+                    {loading ? (
+                      <div className="skeleton skeleton-number" />
+                    ) : (
+                      <>
+                        <strong>{stat.value}</strong>
+                        <span className="stat-target-label">{stat.target}</span>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="stat-progress-track">
+                    <div
+                      className="stat-progress-bar"
+                      style={{ width: loading ? "0%" : `${Math.min(100, stat.pct)}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* TIER 2: What To Do Next (Actions & Recommendations) */}
+      <section className="dashboard-section">
+        <div className="section-header">
+          <h2 className="section-title">What To Do Next</h2>
+        </div>
+        <div className="dashboard-actions-group">
+          <TodayFocus
+            totalCalories={totalCalories}
+            calorieGoal={calorieGoal}
+            totalProtein={totalProtein}
+            proteinGoal={proteinGoal}
+            steps={steps}
+            stepGoal={DEFAULT_STEP_GOAL}
+            sleepHours={sleepHours}
+            sleepGoal={DEFAULT_SLEEP_GOAL}
+            loading={loading}
+          />
+
+          <GettingStartedChecklist
+            hasMeal={totalCalories > 0}
+            hasWorkout={hasWorkout}
+            hasWeightEntry={hasWeightEntry}
+            hasVisitedCoach={hasVisitedCoach}
+          />
+
+          <div className="coach-shortcut-card">
+            <div className="coach-shortcut-info">
+              <div className="coach-shortcut-icon">
+                <Bot size={18} />
+              </div>
+              <div className="coach-shortcut-text">
+                <div className="coach-shortcut-title-row">
+                  <h3 className="coach-shortcut-title">FitOS AI Coach Studio</h3>
+                  <span className="coach-badge">24/7 ADVISOR</span>
+                </div>
+                <p className="coach-shortcut-desc">
+                  Ask questions about remaining macros, workout adjustments, or plateau diagnosis.
+                </p>
+              </div>
+            </div>
+
+            <Link to="/coach" className="coach-action-btn">
+              <span>Open Coach Chat</span>
+              <ArrowRight size={14} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* TIER 3: Trends & Insights (Weekly History + AI Intelligence) */}
+      <section className="dashboard-section">
+        <div className="section-header">
+          <h2 className="section-title">Trends & Analysis</h2>
+        </div>
+        <div className="dashboard-insights-grid">
+          {/* Weekly Activity Chart */}
+          <div className="weekly-activity-card">
+            <div className="card-header-row">
+              <div className="card-header-title-group">
+                <h3 className="card-title">Weekly Activity</h3>
+                <p className="card-subtitle">Daily step counts over the last 7 days</p>
+              </div>
+              {activeDaysCount > 0 && (
+                <span className="active-days-badge">
+                  {activeDaysCount} of 7 active days
+                </span>
+              )}
+            </div>
+
+            <div className="chart-area">
+              <div className="chart-y-axis">
+                <span>{Math.round(maxWeeklySteps / 1000)}k</span>
+                <span>{Math.round((maxWeeklySteps * 0.75) / 1000)}k</span>
+                <span>{Math.round((maxWeeklySteps * 0.5) / 1000)}k</span>
+                <span>{Math.round((maxWeeklySteps * 0.25) / 1000)}k</span>
+                <span>0</span>
+              </div>
+
+              <div className="chart-content">
+                <div className="chart-grid">
+                  <div /><div /><div /><div /><div />
+                </div>
+
+                <div className="bars">
+                  {weekly.map((item, i) => (
+                    <div key={i} className="bar-column">
+                      <div
+                        className="activity-bar"
+                        style={{ height: `${Math.min(100, (item.steps / maxWeeklySteps) * 100)}%` }}
+                        title={`${item.day}: ${item.steps.toLocaleString()} steps`}
+                      />
+                      <span className="bar-day-label">{item.day}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Insight Card */}
+          <div className="ai-insight-card">
+            <div className="card-header-row">
+              <div className="card-header-title-group">
+                <h3 className="card-title">Daily AI Insight</h3>
+                <p className="card-subtitle">Automated feedback based on recent performance</p>
+              </div>
+            </div>
+
+            <div className="ai-insight-content">
+              {insightLoading ? (
+                <div className="ai-insight-skeleton">
+                  <div className="skeleton skeleton-text wide" style={{ marginBottom: 8 }} />
+                  <div className="skeleton skeleton-text wide" style={{ marginBottom: 8 }} />
+                  <div className="skeleton skeleton-text short" />
+                </div>
+              ) : (
+                <p className="ai-insight-text">
+                  {aiInsight || "Log your daily activity and meals to generate personalized AI coaching insights."}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

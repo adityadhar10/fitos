@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { TrendingUp, Utensils, Flame, Beef, Footprints, Moon, Trophy, type LucideIcon } from "lucide-react";
+import { TrendingUp, Utensils, Flame, Beef, Footprints, Moon, Trophy, ArrowRight, type LucideIcon } from "lucide-react";
 
 interface TodayFocusProps {
   totalCalories: number;
@@ -26,8 +26,8 @@ export default function TodayFocus({
 }: TodayFocusProps) {
   if (loading) {
     return (
-      <div className="today-focus">
-        <div className="skeleton" style={{ height: 72, borderRadius: 14 }} />
+      <div className="today-focus-card">
+        <div className="skeleton" style={{ height: 60, width: "100%", borderRadius: 12 }} />
       </div>
     );
   }
@@ -70,15 +70,20 @@ export default function TodayFocus({
   }
 
   return (
-    <div className="today-focus">
-      <div className="today-focus-icon">
-        <Icon size={22} />
+    <div className="today-focus-card">
+      <div className="today-focus-left">
+        <div className="today-focus-icon-wrapper">
+          <Icon size={18} />
+        </div>
+        <div className="today-focus-body">
+          <div className="today-focus-tag">RECOMMENDED ACTION</div>
+          <p className="today-focus-message">{message}</p>
+        </div>
       </div>
-      <div className="today-focus-body">
-        <h2>Today's Focus</h2>
-        <p>{message}</p>
-      </div>
-      <Link to={to} className="today-focus-cta">{cta}</Link>
+      <Link to={to} className="today-focus-cta">
+        <span>{cta}</span>
+        <ArrowRight size={14} />
+      </Link>
     </div>
   );
 }

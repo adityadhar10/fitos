@@ -71,34 +71,36 @@ function AppShell() {
     <div className="app">
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <h2>FitOS</h2>
-          <span className="sidebar-version">v{APP_VERSION}</span>
+          <div className="sidebar-logo-text">
+            <h2>FitOS</h2>
+            <span className="sidebar-version">v{APP_VERSION}</span>
+          </div>
         </div>
 
-        <nav>
+        <nav className="sidebar-nav">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             return (
               <NavLink
                 key={item.to}
                 to={item.to}
-                className={({ isActive }) => (isActive ? "active" : "")}
+                className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}
               >
-                <span className="nav-icon">
+                <span className="sidebar-icon-wrap">
                   <Icon size={18} />
                 </span>
-                <span className="nav-label">{item.label}</span>
+                <span className="sidebar-label">{item.label}</span>
               </NavLink>
             );
           })}
         </nav>
 
         <div className="sidebar-bottom">
-          <button onClick={logout}>
-            <span className="nav-icon">
+          <button onClick={logout} className="sidebar-logout-btn" type="button">
+            <span className="sidebar-icon-wrap">
               <LogOut size={18} />
             </span>
-            <span>Log Out</span>
+            <span className="sidebar-label">Log Out</span>
           </button>
         </div>
       </aside>

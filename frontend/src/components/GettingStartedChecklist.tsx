@@ -65,67 +65,41 @@ export default function GettingStartedChecklist({
   }
 
   return (
-    <div
-      className="section-card"
-      style={{
-        marginBottom: 16,
-        background: "linear-gradient(135deg, #0e1c14 0%, #0d1511 100%)",
-        border: "1px solid #1f3827",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-        <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#ffffff" }}>Getting Started</h2>
-        <span style={{ fontSize: 12, color: "#4ade80", fontWeight: 600 }}>
-          {completedCount} / {items.length} complete
+    <div className="getting-started-card">
+      <div className="getting-started-header">
+        <div className="getting-started-header-left">
+          <h3 className="getting-started-title">Getting Started</h3>
+          <p className="getting-started-desc">
+            Complete these foundational steps to unlock your full Fitness Score.
+          </p>
+        </div>
+        <span className="getting-started-badge">
+          {completedCount} of {items.length} completed
         </span>
       </div>
-      <p className="subtext" style={{ margin: "2px 0 14px 0", fontSize: 13 }}>
-        Finish these steps to unlock your full Fitness Score and get the most out of FitOS.
-      </p>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div className="getting-started-list">
         {items.map((item) => {
           const Icon = item.icon;
           return (
             <Link
               key={item.id}
               to={item.to}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "10px 12px",
-                borderRadius: 10,
-                background: item.done ? "#0d1712" : "#0a100d",
-                border: `1px solid ${item.done ? "#1f3827" : "#1c2620"}`,
-                textDecoration: "none",
-                transition: "border-color 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                if (!item.done) e.currentTarget.style.borderColor = "#4ade80";
-              }}
-              onMouseLeave={(e) => {
-                if (!item.done) e.currentTarget.style.borderColor = "#1c2620";
-              }}
+              className={`getting-started-item ${item.done ? "done" : ""}`}
             >
-              {item.done ? (
-                <CheckCircle2 size={20} color="#4ade80" style={{ flexShrink: 0 }} />
-              ) : (
-                <Circle size={20} color="#4a5550" style={{ flexShrink: 0 }} />
-              )}
-              <Icon size={16} color={item.done ? "#4ade80" : "#8a968f"} style={{ flexShrink: 0 }} />
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: item.done ? "#8a968f" : "#ffffff",
-                    textDecoration: item.done ? "line-through" : "none",
-                  }}
-                >
-                  {item.label}
-                </div>
-                <div style={{ fontSize: 11, color: "#7a8580" }}>{item.description}</div>
+              <div className="item-status-icon">
+                {item.done ? (
+                  <CheckCircle2 size={18} className="text-accent" />
+                ) : (
+                  <Circle size={18} className="text-muted" />
+                )}
+              </div>
+              <div className="item-icon-box">
+                <Icon size={15} />
+              </div>
+              <div className="item-content">
+                <div className="item-label">{item.label}</div>
+                <div className="item-description">{item.description}</div>
               </div>
             </Link>
           );
