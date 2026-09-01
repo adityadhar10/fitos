@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import FoodSearch from "../components/FoodSearch";
 import FoodPhotoScan from "../components/FoodPhotoScan";
 import WaterTracker from "../components/WaterTracker";
+import TDEECalculator from "../components/TDEECalculator";
 import {
   DEFAULT_CALORIE_GOAL,
   DEFAULT_PROTEIN_GOAL,
@@ -173,6 +174,8 @@ export default function Nutrition() {
         <h1>Nutrition</h1>
         <p>Track your daily meals, macros, and calories with AI-powered tools.</p>
       </div>
+
+      <TDEECalculator />
 
       <div className="nutrition-card daily-calories-card">
         <div className="card-title" style={{ display: "flex", alignItems: "center", gap: 6 }}>

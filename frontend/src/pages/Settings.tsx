@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import { exportWorkoutCSV, exportNutritionCSV, exportWeightCSV } from '../services/api';
 import { DEFAULT_STEP_GOAL } from '../constants/goals';
 import { APP_VERSION } from '../constants/version';
-import TDEECalculator from '../components/TDEECalculator';
 import {
   User,
   Mail,
@@ -213,7 +212,6 @@ export default function Settings() {
       </div>
 
       {/* ── SCIENCE-BASED TDEE & MACRO CALCULATOR ── */}
-      <TDEECalculator />
 
       {/* ── PREFERENCES ── */}
       <div className="section-card">
