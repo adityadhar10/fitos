@@ -3920,4 +3920,11 @@ select {
   font-family: inherit;
 }
 
+.activity-edit-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+
 

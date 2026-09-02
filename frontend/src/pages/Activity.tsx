@@ -75,18 +75,12 @@ export default function Activity() {
         <p>Real-time movement detection, automatic step counter, and sleep tracker.</p>
       </div>
 
-      {!loading && (
-        <AutoStepTracker
-          initialSteps={steps}
-          onStepsChange={(newSteps) => setSteps(newSteps)}
-        />
-      )}
-
+      {/* ── TIER 1: CURRENT STATUS & RECOVERY ── */}
       {!loading && (
         <div className="recovery-score-card">
           <div>
-            <h2>Recovery Score</h2>
-            <p>Based on movement and sleep today</p>
+            <h2>Daily Recovery Score</h2>
+            <p>Calculated from today's movement volume and sleep duration</p>
           </div>
           <div className="recovery-score-value">
             <strong>{recoveryScore}</strong>
@@ -143,7 +137,7 @@ export default function Activity() {
       </div>
 
       <div className="section-card">
-        <h2 className="section-title">Today's Stats</h2>
+        <h2 className="section-title">Today's Movement Stats</h2>
         <div className="activity-grid">
           {ACTIVITY_STATS.map((act) => {
             const Icon = act.icon;
@@ -162,16 +156,28 @@ export default function Activity() {
         </div>
       </div>
 
+      {/* ── TIER 2: REAL-TIME TRACKING & ACTIONS ── */}
+      {!loading && (
+        <AutoStepTracker
+          initialSteps={steps}
+          onStepsChange={(newSteps) => setSteps(newSteps)}
+        />
+      )}
+
+      {/* ── TIER 3: MANUAL ADJUSTMENTS ── */}
       <div className="section-card">
         <div className="section-header">
-          <h2>Update Activity</h2>
+          <div>
+            <h2 className="section-title">Update Activity</h2>
+            <p className="subtext" style={{ margin: 0 }}>Manually adjust your step count or sleep log</p>
+          </div>
           <button className="action-btn" onClick={() => setShowForm((s) => !s)}>
             {showForm ? "Cancel" : "Edit"}
           </button>
         </div>
 
         {showForm && (
-          <form onSubmit={handleSave} style={{ display: "flex", gap: 8, marginTop: 12 }}>
+          <form onSubmit={handleSave} className="activity-edit-form">
             <input
               placeholder="Steps (e.g. 8000)"
               type="number"
