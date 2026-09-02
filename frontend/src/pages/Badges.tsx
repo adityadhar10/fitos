@@ -72,6 +72,7 @@ export default function Badges() {
         <p>Earn badges by hitting milestones in your fitness journey.</p>
       </div>
 
+      {/* ── TIER 1: MILESTONE SUMMARY ── */}
       <div className="section-card badges-summary-card">
         <div className="badges-summary-left">
           <div className="badges-summary-count">
@@ -84,7 +85,7 @@ export default function Badges() {
               </>
             )}
           </div>
-          <p className="badges-summary-label">Badges Earned</p>
+          <p className="badges-summary-label">Badges Unlocked</p>
         </div>
 
         <div className="badges-summary-right">
@@ -98,9 +99,13 @@ export default function Badges() {
         </div>
       </div>
 
+      {/* ── TIER 2: ALL ACHIEVEMENTS ── */}
       <div className="section-card">
         <div className="section-header">
-          <h2>All Achievements</h2>
+          <div>
+            <h2 className="section-title">All Achievements</h2>
+            <p className="subtext" style={{ margin: 0 }}>Milestones unlocked across workouts, nutrition, and consistency</p>
+          </div>
         </div>
 
         {loading ? (
