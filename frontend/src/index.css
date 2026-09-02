@@ -3926,5 +3926,60 @@ select {
   margin-top: 12px;
 }
 
+/* =========================================================
+   PROGRESS & EXPORT COMPONENTS
+========================================================= */
+
+.progress-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.progress-input {
+  padding: 10px 14px;
+  border-radius: 10px;
+  flex: 1;
+  background: #0f1511;
+  border: 1px solid #252d28;
+  color: #ffffff;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+}
+
+.progress-input:focus {
+  border-color: #22c55e;
+}
+
+.export-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.export-tile-btn {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  background: #14281b;
+  border: 1px solid #254a32;
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.export-tile-btn:hover {
+  background: #193823;
+  border-color: #2e6340;
+}
+
+
 
 

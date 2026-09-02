@@ -98,26 +98,15 @@ export default function Progress() {
         <p>Muscle heatmap, weight trends, and your full training history.</p>
       </div>
 
-      <div className="section-card">
-        <div className="section-header">
-          <h2>Muscle Group Heatmap</h2>
-          <span className="subtext" style={{ marginTop: 0 }}>Last 7 days</span>
-        </div>
-        {loading ? (
-          <div className="skeleton" style={{ height: 300, borderRadius: 12 }} />
-        ) : (
-          <MuscleHeatmap workouts={workouts} />
-        )}
-      </div>
-
+      {/* ── TIER 1: CURRENT STATUS & WEIGHT TRACKING ── */}
       {!loading && currentWeight !== null && (
         <div className="weight-stats-row">
           <div className="weight-stat-item">
-            <div className="weight-stat-label">Current</div>
+            <div className="weight-stat-label">Current Weight</div>
             <div className="weight-stat-value neutral">{currentWeight}kg</div>
           </div>
           <div className="weight-stat-item">
-            <div className="weight-stat-label">Goal</div>
+            <div className="weight-stat-label">Target Goal</div>
             <div className="weight-stat-value neutral">{GOAL_WEIGHT_KG}kg</div>
           </div>
           <div className="weight-stat-item">
@@ -133,32 +122,25 @@ export default function Progress() {
 
       <div className="section-card">
         <div className="section-header">
-          <h2>Weight Chart</h2>
+          <div>
+            <h2 className="section-title">Weight Progress</h2>
+            <p className="subtext" style={{ margin: 0 }}>Historical weigh-in trend line</p>
+          </div>
           <button className="action-btn" onClick={() => setShowForm((s) => !s)}>
             {showForm ? "Cancel" : "+ Log Weight"}
           </button>
         </div>
 
         {showForm && (
-          <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+          <form onSubmit={handleSubmit} className="progress-form">
             <input
-              placeholder="Weight (kg)"
+              placeholder="Weight in kg (e.g. 72.5)"
               type="number"
               step="0.1"
               value={weightInput}
               onChange={(e) => setWeightInput(e.target.value)}
               required
-              style={{
-                padding: "10px 14px",
-                borderRadius: 10,
-                flex: 1,
-                background: "#0f1511",
-                border: "1px solid #252d28",
-                color: "#fff",
-                fontSize: 14,
-                fontFamily: "inherit",
-                outline: "none",
-              }}
+              className="progress-input"
             />
             <button className="primary-button" type="submit" disabled={saving}>
               {saving ? "Saving..." : "Save"}
@@ -167,9 +149,7 @@ export default function Progress() {
         )}
 
         {loading ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "8px 0" }}>
-            <div className="skeleton" style={{ height: 200, borderRadius: 10 }} />
-          </div>
+          <div className="skeleton" style={{ height: 200, borderRadius: 10, margin: "8px 0" }} />
         ) : (
           <WeightChart entries={entries} goalWeight={GOAL_WEIGHT_KG} />
         )}
@@ -182,6 +162,22 @@ export default function Progress() {
         )}
       </div>
 
+      {/* ── TIER 2: MUSCLE GROUP ACTIVATION ── */}
+      <div className="section-card">
+        <div className="section-header">
+          <div>
+            <h2 className="section-title">Muscle Group Heatmap</h2>
+            <p className="subtext" style={{ margin: 0 }}>Training volume distribution across the last 7 days</p>
+          </div>
+        </div>
+        {loading ? (
+          <div className="skeleton" style={{ height: 300, borderRadius: 12 }} />
+        ) : (
+          <MuscleHeatmap workouts={workouts} />
+        )}
+      </div>
+
+      {/* ── TIER 3: TRENDS, FORECAST & DATA EXPORT ── */}
       {!loading && entries.length > 0 && (
         <PredictiveWeightChart
           entries={entries}
@@ -192,10 +188,12 @@ export default function Progress() {
 
       <div className="section-card">
         <div className="section-header">
-          <h2>History</h2>
-          <span className="subtext" style={{ marginTop: 0 }}>
-            {entries.length} {entries.length === 1 ? "entry" : "entries"}
-          </span>
+          <div>
+            <h2 className="section-title">Weigh-In History</h2>
+            <p className="subtext" style={{ margin: 0 }}>
+              {entries.length} {entries.length === 1 ? "entry" : "entries"} logged
+            </p>
+          </div>
         </div>
 
         <div className="history-list">
@@ -226,34 +224,36 @@ export default function Progress() {
       </div>
 
       <div className="section-card">
-        <div className="section-header">
-          <h2>Export Your Fitness Data</h2>
-          <span className="subtext" style={{ marginTop: 0 }}>Download CSV reports</span>
+        <div className="section-header" style={{ marginBottom: 4 }}>
+          <div>
+            <h2 className="section-title">Export Fitness Data</h2>
+            <p className="subtext" style={{ margin: 0 }}>Download spreadsheet CSV reports</p>
+          </div>
         </div>
         <p className="subtext" style={{ marginBottom: 16 }}>
           Take your data anywhere. Export complete logs for spreadsheet analysis, coaching reviews, or backups.
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+        <div className="export-grid">
           <button
-            className="tab-btn active"
-            style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 10, cursor: "pointer" }}
+            type="button"
+            className="export-tile-btn"
             onClick={() => exportWorkoutCSV().catch((err) => alert("Failed to export: " + err.message))}
           >
-            <Dumbbell size={14} /> Workouts CSV
+            <Dumbbell size={15} /> Workouts CSV
           </button>
           <button
-            className="tab-btn active"
-            style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 10, cursor: "pointer" }}
+            type="button"
+            className="export-tile-btn"
             onClick={() => exportNutritionCSV().catch((err) => alert("Failed to export: " + err.message))}
           >
-            <Utensils size={14} /> Nutrition CSV
+            <Utensils size={15} /> Nutrition CSV
           </button>
           <button
-            className="tab-btn active"
-            style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 10, cursor: "pointer" }}
+            type="button"
+            className="export-tile-btn"
             onClick={() => exportWeightCSV().catch((err) => alert("Failed to export: " + err.message))}
           >
-            <Scale size={14} /> Weight Log CSV
+            <Scale size={15} /> Weight Log CSV
           </button>
         </div>
       </div>
