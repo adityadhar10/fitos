@@ -61,8 +61,8 @@ function AppShell() {
   if (!user) {
     return (
       <Routes>
-        <Route path="/signup" element={<Signup onSwitchToLogin={() => {}} />} />
-        <Route path="*" element={<Login onSwitchToSignup={() => {}} />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="*" element={<Login />} />
       </Routes>
     );
   }
