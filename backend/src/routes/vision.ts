@@ -55,7 +55,12 @@ router.post(
   validate(analyzeSchema),
   async (req: AuthRequest, res: Response) => {
     try {
-      const { imageBase64, mimeType } = req.body;
+      const { imageBase64: rawImageBase64, mimeType } = req.body;
+      // Strip the data URL prefix (e.g. "data:image/jpeg;base64,") if present,
+      // since Gemini's API expects only the raw base64 payload.
+      const imageBase64 = rawImageBase64.includes(',')
+        ? rawImageBase64.split(',')[1]
+        : rawImageBase64;
 
       if (!process.env.GEMINI_API_KEY) {
         console.error('GEMINI_API_KEY is not configured');

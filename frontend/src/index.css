@@ -3099,3 +3099,568 @@ select {
   align-items: center;
   gap: 4px;
 }
+
+/* =========================================================
+   REUSABLE PAGE LAYOUT & SECTION SYSTEM (FitOS Standard)
+========================================================= */
+
+.fitos-page-container {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-bottom: 40px;
+}
+
+.fitos-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #111713;
+  border: 1px solid #1e2620;
+  border-radius: 14px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.fitos-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fitos-header-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #22c55e;
+  flex-shrink: 0;
+}
+
+.fitos-header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+  margin: 0;
+}
+
+.fitos-header-subtitle {
+  font-size: 12.5px;
+  color: #8a968f;
+  margin: 2px 0 0 0;
+}
+
+.fitos-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fitos-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.fitos-section-title {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.2px;
+  margin: 0;
+}
+
+.fitos-section-subtitle {
+  font-size: 12px;
+  color: #8a968f;
+}
+
+.fitos-card {
+  background: #111713;
+  border: 1px solid #1e2620;
+  border-radius: 14px;
+  padding: 18px 20px;
+  transition: border-color 0.15s ease;
+}
+
+.fitos-card:hover {
+  border-color: #263329;
+}
+
+.fitos-card-highlight {
+  background: #121c15;
+  border-color: #223f2a;
+}
+
+.fitos-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.fitos-badge-green {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #4ade80;
+}
+
+.fitos-badge-muted {
+  background: #16201a;
+  border: 1px solid #233026;
+  color: #8a968f;
+}
+
+/* =========================================================
+   AI COACH PAGE STYLING
+========================================================= */
+
+.coach-page {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  min-height: calc(100vh - 100px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 24px;
+}
+
+.coach-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #111713;
+  border: 1px solid #1e2620;
+  border-radius: 14px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.coach-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.coach-header-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #22c55e;
+}
+
+.coach-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.coach-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.2px;
+}
+
+.coach-engine-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.28);
+}
+
+.coach-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+}
+
+.coach-subtitle {
+  margin: 2px 0 0 0;
+  font-size: 12px;
+  color: #8a968f;
+}
+
+.coach-header-btn {
+  background: #16201a;
+  border: 1px solid #233026;
+  color: #d1fae5;
+  padding: 7px 13px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.coach-header-btn:hover {
+  background: #1c2b21;
+  border-color: #2d4533;
+}
+
+.coach-empty-state {
+  margin: auto 0;
+  width: 100%;
+  max-width: 800px;
+  align-self: center;
+  text-align: center;
+  padding: 30px 10px;
+}
+
+.coach-empty-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #14281b;
+  border: 1px solid #23482e;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #22c55e;
+  margin-bottom: 12px;
+}
+
+.coach-empty-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.3px;
+}
+
+.coach-empty-subtitle {
+  font-size: 13.5px;
+  color: #8a968f;
+  margin: 0 auto 24px auto;
+  max-width: 460px;
+  line-height: 1.5;
+}
+
+.coach-starter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+}
+
+.coach-starter-card {
+  text-align: left;
+  padding: 16px 18px;
+  background: #111713;
+  border: 1px solid #1e2620;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.coach-starter-card:hover {
+  border-color: #22c55e !important;
+  background: #142118 !important;
+  transform: translateY(-2px);
+}
+
+.coach-starter-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.coach-starter-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.coach-starter-sub {
+  font-size: 11.5px;
+  color: #86efac;
+}
+
+.coach-starter-desc {
+  font-size: 12px;
+  color: #8a968f;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.coach-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 0;
+}
+
+.coach-user-card {
+  max-width: 82%;
+  align-self: flex-end;
+  background: #14251a;
+  border: 1px solid #23452f;
+  border-radius: 16px 16px 4px 16px;
+  padding: 14px 18px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.coach-assistant-card {
+  max-width: 88%;
+  align-self: flex-start;
+  background: #111713;
+  border: 1px solid #1e2620;
+  border-radius: 16px 16px 16px 4px;
+  padding: 14px 18px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.coach-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.coach-card-sender {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.coach-card-time {
+  font-size: 10.5px;
+  color: #6b7d72;
+}
+
+.coach-attached-img {
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #24462f;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.coach-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  padding-left: 4px;
+}
+
+.coach-tool-btn {
+  background: #16201a;
+  border: 1px solid #233026;
+  color: #8a968f;
+  font-size: 11.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.coach-tool-btn:hover {
+  background: #1c2b21;
+  color: #d1fae5;
+  border-color: #2e4433;
+}
+
+.coach-tool-btn-active {
+  background: #3f1414;
+  border-color: #ef4444;
+  color: #fca5a5;
+}
+
+.coach-composer-wrap {
+  background: #111713;
+  border: 1px solid #1e2620;
+  border-radius: 16px;
+  padding: 12px 14px;
+  transition: all 0.2s ease;
+  margin-top: auto;
+}
+
+.coach-composer-wrap:focus-within {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25), 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.coach-preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  background: #142017;
+  border: 1px solid #233827;
+  border-radius: 10px;
+}
+
+.coach-preview-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.coach-preview-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid #26432c;
+  flex-shrink: 0;
+}
+
+.coach-preview-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.coach-preview-size {
+  font-size: 11px;
+  color: #4ade80;
+  margin-top: 1px;
+}
+
+.coach-preview-remove {
+  background: transparent;
+  border: none;
+  color: #8a968f;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+}
+
+.coach-preview-remove:hover {
+  color: #f87171;
+}
+
+.coach-input-textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+  resize: none;
+  line-height: 1.5;
+  min-height: 44px;
+  max-height: 140px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.coach-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #1a241c;
+  gap: 8px;
+}
+
+.coach-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.coach-input-btn {
+  background: #16201a;
+  border: 1px solid #233026;
+  color: #d1fae5;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.coach-input-btn:hover {
+  background: #1e2e21;
+  border-color: #2f4a35;
+}
+
+.coach-input-btn-active {
+  background: #7f1d1d !important;
+  border-color: #ef4444 !important;
+  color: #fca5a5 !important;
+}
+
+.coach-submit-btn {
+  background: #22c55e;
+  border: none;
+  color: #000000;
+  padding: 7px 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.coach-submit-btn:disabled {
+  background: #18221b;
+  color: #4b5a50;
+  cursor: default;
+}
+
+@media (max-width: 640px) {
+  .coach-starter-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

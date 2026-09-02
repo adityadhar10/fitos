@@ -128,6 +128,7 @@ function AppShell() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/coach" element={<Coach />} />
+          <Route path="/ai-coach" element={<Coach />} />
           <Route path="/nutrition" element={<Nutrition />} />
           <Route path="/workout" element={<Workout />} />
           <Route path="/activity" element={<Activity />} />

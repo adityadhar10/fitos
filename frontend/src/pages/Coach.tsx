@@ -1,58 +1,274 @@
 import { useState, useEffect, useRef } from "react";
 import "../index.css";
-import { chatWithCoach, getMeals, getTodayMetrics } from "../services/api";
+import { chatWithCoach, getMeals, getTodayMetrics, analyzeFood } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { DEFAULT_CALORIE_GOAL, DEFAULT_PROTEIN_GOAL } from "../constants/goals";
-import { Search, Utensils, Dumbbell, TrendingUp, Bot, Send, type LucideIcon } from "lucide-react";
+import {
+  Sparkles,
+  Camera,
+  Mic,
+  Volume2,
+  VolumeX,
+  Plus,
+  X,
+  Copy,
+  Check,
+  AlertCircle,
+  ArrowUp,
+  RotateCcw,
+} from "lucide-react";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  imageUrl?: string;
   timestamp: string;
 }
 
-const SUGGESTIONS: { icon: LucideIcon; label: string; text: string }[] = [
-  { icon: Search, label: "What went wrong with my progress this week?", text: "Can you analyze what went wrong with my progress this week and what I should adjust?" },
-  { icon: Utensils, label: "Suggest dinner for remaining protein", text: "What should I eat for dinner to hit my remaining protein goal without exceeding my calories?" },
-  { icon: Dumbbell, label: "Recommend workout based on recovery", text: "Based on my recent workout history and muscle recovery, what workout routine should I do today?" },
-  { icon: TrendingUp, label: "Predict my 30-day weight progress", text: "Based on my current caloric intake and activity, what will my progress look like in 30 days?" },
+const STARTER_PROMPTS = [
+  {
+    icon: "🥩",
+    title: "Protein Intake",
+    subtitle: "How much do I need per day?",
+    desc: "Calculate daily protein targets & best lean sources for recovery.",
+    prompt: "How much protein should I eat daily for muscle recovery and what are the best lean food sources?",
+  },
+  {
+    icon: "🥗",
+    title: "Meal Macro Scan",
+    subtitle: "Analyze my meal and estimate macros",
+    desc: "Estimate calories and macronutrients from a food photo or note.",
+    prompt: "Estimate the calories, protein, and macronutrients in this meal, and tell me if it is good for post-workout recovery.",
+  },
+  {
+    icon: "🏋️",
+    title: "5-Day Split",
+    subtitle: "Build my workout routine",
+    desc: "Design an evidence-based Push / Pull / Legs hypertrophy split.",
+    prompt: "Design an evidence-based 5-day Push/Pull/Legs hypertrophy workout routine with exercise selection and rep ranges.",
+  },
+  {
+    icon: "📐",
+    title: "Form Cues",
+    subtitle: "Squat/deadlift form & spine safety",
+    desc: "Biomechanics cues for spine neutrality, depth & bar path.",
+    prompt: "What are the most important biomechanical form cues to protect my lower back and ensure proper depth during squats and deadlifts?",
+  },
 ];
+
+// Offline smart intelligence fallback
+function generateOfflineResponse(rawQuery: string, userName = "Athlete"): string {
+  const q = rawQuery.toLowerCase().trim();
+
+  // Safety medical notice
+  if (
+    q.includes("pain") ||
+    q.includes("hurt") ||
+    q.includes("injury") ||
+    q.includes("tear") ||
+    q.includes("sprain") ||
+    q.includes("fracture") ||
+    q.includes("meniscus") ||
+    q.includes("dislocat") ||
+    q.includes("swelling") ||
+    q.includes("diagnos") ||
+    q.includes("emergency")
+  ) {
+    return `### 🩺 Important Health & Safety Notice\n\nI cannot diagnose an injury or medical condition from an image or description. If you are experiencing severe or persistent pain, swelling, numbness, or suspect an acute injury, please consult a qualified healthcare professional or physical therapist.\n\n#### General Recovery Best Practices (R.I.C.E. Protocol):\n- **Rest**: Temporarily avoid heavy loading or high-impact stress on the affected area.\n- **Ice**: Apply a cold compress for 15–20 minutes at a time to reduce acute swelling.\n- **Compression & Elevation**: Use a light wrap and elevate the limb above heart level.\n- **Gradual Return**: Never push through sharp or worsening joint pain.`;
+  }
+
+  // Nutrition & Protein
+  if (
+    q.includes("protein") ||
+    q.includes("food") ||
+    q.includes("meal") ||
+    q.includes("diet") ||
+    q.includes("eat") ||
+    q.includes("nutrition") ||
+    q.includes("calorie")
+  ) {
+    return `### 🥩 Protein Targets & High-Yield Sources\n\nTo maximize muscle recovery and lean mass retention, aim for **1.6g to 2.2g of protein per kg of bodyweight** daily.\n\n#### 🍗 Lean Non-Vegetarian Sources (Per 100g Cooked):\n- **Chicken Breast**: ~31g protein (165 kcal) — Gold standard lean protein.\n- **Atlantic Salmon**: ~25g protein (208 kcal) — High in Omega-3 EPA/DHA.\n- **Whole Eggs / Egg Whites**: ~6g per large egg / ~11g per 100g whites.\n- **Canned Tuna**: ~26g protein (116 kcal) — Ultra-lean convenience.\n\n#### 🧀 Vegetarian & Plant-Based Sources (Per 100g):\n- **Soy Chunks (TVP)**: ~52g protein per 100g dry — Highest plant density.\n- **Paneer / Cottage Cheese**: ~18g protein (265 kcal) — Rich in slow-digesting casein.\n- **Low-Fat Greek Yogurt**: ~10g protein (59 kcal) — Probiotic rich with leucine.\n- **Tofu (Extra Firm)**: ~15g protein (144 kcal) — Complete amino acid profile.`;
+  }
+
+  // Workout splits
+  if (
+    q.includes("workout") ||
+    q.includes("split") ||
+    q.includes("routine") ||
+    q.includes("squat") ||
+    q.includes("bench") ||
+    q.includes("deadlift")
+  ) {
+    return `### 🏋️ Evidence-Based Workout Programming\n\n#### 1. Push / Pull / Legs (PPL) 5-Day Split\n- **Push**: Incline Dumbbell Press (3x8-10), Overhead Barbell Press (3x8), Cable Lateral Raises (4x12-15), Tricep Rope Pushdowns (3x12).\n- **Pull**: Barbell Rows (3x8), Lat Pulldowns (3x10-12), Facepulls (4x15), Incline Dumbbell Curls (3x10-12).\n- **Legs**: Barbell Back Squats (3x6-8), Romanian Deadlifts (3x8-10), Leg Extensions (3x12-15), Standing Calf Raises (4x15).\n\n#### 2. Progressive Overload Principles\n- Increase the load by 2.5kg once you can perform the upper rep target with clean form (RPE 8).\n- Rest 2–3 minutes on compound barbell lifts and 60–90 seconds on isolation accessories.`;
+  }
+
+  // Form cues
+  if (q.includes("form") || q.includes("biomechanic") || q.includes("depth") || q.includes("cue")) {
+    return `### 📐 Biomechanical Form Cues for Squats & Deadlifts\n\n#### 🏋️ Squats (Back & Front):\n1. **Root Your Feet**: Tripod foot contact (big toe, pinky toe, heel).\n2. **Knee Tracking**: Drive knees out in line with your middle toes.\n3. **Depth**: Hip crease below top of knee for full range.\n4. **Spine**: Chest up, brace core 360 degrees.\n\n#### ⚡ Deadlifts (Conventional & Romanian):\n1. **Bar Placement**: Mid-foot balance, 1 inch from shins.\n2. **Lat Engagement**: Squeeze armpits like squeezing oranges.\n3. **Spine Neutrality**: Lock pelvis and ribs; avoid hyperextension.\n4. **Leg Drive**: Push the floor away before hinging hips forward.`;
+  }
+
+  return `### ✦ FitOS Coach\n\nRegarding **"${rawQuery}"**:\n\nI'm here to support your training, nutrition, and recovery, ${userName}!\n- **Workout Programming**: Custom splits and exercise cues.\n- **Nutrition & Diet**: Protein requirements and calorie targets.\n- **Exercise Form**: Biomechanics and setup tips.\n\nFeel free to ask any fitness question, tap **🎙️ Voice**, or attach a **📷 Photo**!`;
+}
+
+// Markdown Formatter
+function renderMarkdown(text: string) {
+  if (!text) return null;
+  const lines = text.split("\n");
+  return (
+    <div style={{ fontSize: 14.5, lineHeight: 1.68, color: "#e2e8f0" }}>
+      {lines.map((line, lIdx) => {
+        const trimmed = line.trim();
+
+        const headerMatch = trimmed.match(/^(#{1,6})\s+(.*)$/);
+        if (headerMatch) {
+          const level = headerMatch[1].length;
+          const content = headerMatch[2];
+          if (level === 1) {
+            return (
+              <h2 key={lIdx} style={{ margin: "16px 0 8px", color: "#ffffff", fontSize: 17, fontWeight: 700 }}>
+                {renderInline(content)}
+              </h2>
+            );
+          }
+          if (level === 2) {
+            return (
+              <h3 key={lIdx} style={{ margin: "14px 0 6px", color: "#ffffff", fontSize: 15.5, fontWeight: 700 }}>
+                {renderInline(content)}
+              </h3>
+            );
+          }
+          return (
+            <h4 key={lIdx} style={{ margin: "10px 0 4px", color: "#4ade80", fontSize: 14, fontWeight: 600 }}>
+              {renderInline(content)}
+            </h4>
+          );
+        }
+
+        if (trimmed.startsWith("- ") || trimmed.startsWith("* ") || trimmed.startsWith("• ")) {
+          return (
+            <div key={lIdx} style={{ display: "flex", gap: 8, margin: "4px 0", paddingLeft: 4 }}>
+              <span style={{ color: "#22c55e", fontWeight: 700 }}>•</span>
+              <div>{renderInline(trimmed.replace(/^[-*•]\s+/, ""))}</div>
+            </div>
+          );
+        }
+        if (/^\d+\.\s+/.test(trimmed)) {
+          return (
+            <div key={lIdx} style={{ margin: "4px 0", paddingLeft: 4 }}>
+              {renderInline(trimmed)}
+            </div>
+          );
+        }
+        if (trimmed.startsWith("> ")) {
+          return (
+            <div key={lIdx} style={{ padding: "8px 14px", background: "rgba(34, 197, 94, 0.08)", borderLeft: "3px solid #22c55e", borderRadius: 6, margin: "8px 0", color: "#d1fae5" }}>
+              {renderInline(trimmed.slice(2))}
+            </div>
+          );
+        }
+        if (trimmed === "") {
+          return <div key={lIdx} style={{ height: 6 }} />;
+        }
+        return (
+          <p key={lIdx} style={{ margin: "5px 0" }}>
+            {renderInline(line)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+function renderInline(str: string) {
+  const parts = str.split(/(\*\*.*?\*\*|`.*?`|\*.*?\*)/g);
+  return (
+    <>
+      {parts.map((p, idx) => {
+        if (p.startsWith("**") && p.endsWith("**") && p.length >= 4) {
+          return (
+            <strong key={idx} style={{ color: "#ffffff", fontWeight: 600 }}>
+              {p.slice(2, -2)}
+            </strong>
+          );
+        }
+        if (p.startsWith("`") && p.endsWith("`") && p.length >= 2) {
+          return (
+            <code
+              key={idx}
+              style={{
+                background: "rgba(34, 197, 94, 0.12)",
+                padding: "2px 6px",
+                borderRadius: 4,
+                color: "#86efac",
+                fontSize: 12.5,
+                fontFamily: "monospace",
+              }}
+            >
+              {p.slice(1, -1)}
+            </code>
+          );
+        }
+        if (p.startsWith("*") && p.endsWith("*") && p.length >= 3) {
+          return (
+            <span key={idx} style={{ color: "#86efac", fontStyle: "italic" }}>
+              {p.slice(1, -1)}
+            </span>
+          );
+        }
+        return p;
+      })}
+    </>
+  );
+}
 
 export default function Coach() {
   const { user } = useAuth();
+  const userName = user?.name ? user.name.split(" ")[0] : "Athlete";
 
-  useEffect(() => {
-    if (user?.id) {
-      localStorage.setItem(`fitos_visited_coach_${user.id}`, "true");
-    }
-  }, [user?.id]);
   const calorieGoal = user?.calorieGoal ?? DEFAULT_CALORIE_GOAL;
   const proteinGoal = user?.proteinGoal ?? DEFAULT_PROTEIN_GOAL;
 
   const [totalCalories, setTotalCalories] = useState(0);
   const [totalProtein, setTotalProtein] = useState(0);
   const [steps, setSteps] = useState(0);
-  const [waterMl, setWaterMl] = useState(0);
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: `Hello ${user?.name ? user.name.split(" ")[0] : "there"}! I am your **FitOS AI Coach**. I have full visibility into your daily macros, workout volume, recovery metrics, and weight trends.\n\nAsk me anything or tap one of the diagnostic shortcuts below to get started!`,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    },
-  ]);
+  // Chat messages
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  // 📷 Image upload
+  const [selectedImage, setSelectedImage] = useState<{
+    dataUrl: string;
+    name: string;
+    sizeFormatted: string;
+    mimeType: string;
+  } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 🎙️ Voice recognition
+  const [isListening, setIsListening] = useState(false);
+  const [speechNotice, setSpeechNotice] = useState<string | null>(null);
+  const recognitionRef = useRef<any>(null);
+
+  // 🔊 Text-to-speech
+  const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
+
+  // Copy message state
+  const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
+
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
-    scrollToBottom();
+    if (user?.id) {
+      localStorage.setItem(`fitos_visited_coach_${user.id}`, "true");
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
   useEffect(() => {
@@ -62,164 +278,406 @@ export default function Coach() {
         setTotalCalories(meals.reduce((sum, m) => sum + m.calories, 0));
         setTotalProtein(meals.reduce((sum, m) => sum + m.protein, 0));
         setSteps(metricsRes.data.metric?.steps || 0);
-        setWaterMl(metricsRes.data.metric?.waterMl || 0);
       })
       .catch((err) => console.error("Failed to load coach metrics context:", err));
   }, []);
 
+  // Cleanup speech on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {}
+      }
+    };
+  }, []);
+
+  const handleNewChat = () => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    setSpeakingMsgId(null);
+    setMessages([]);
+    setSelectedImage(null);
+    setInput("");
+  };
+
+  // ----------------------------------------------------
+  // 🎙️ VOICE INPUT (Web Speech API with zero duplication bug)
+  // ----------------------------------------------------
+  const handleToggleVoice = () => {
+    setSpeechNotice(null);
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setSpeechNotice("Voice input is not supported in this browser.");
+      setTimeout(() => setSpeechNotice(null), 4500);
+      return;
+    }
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {}
+      }
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.interimResults = true;
+      recognition.continuous = false;
+
+      const baseText = input.trim();
+      let finalTranscript = "";
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setSpeechNotice(null);
+      };
+
+      recognition.onresult = (event: any) => {
+        let interimTranscript = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        const spoken = (finalTranscript + " " + interimTranscript).trim();
+        if (spoken) {
+          setInput(baseText ? `${baseText} ${spoken}` : spoken);
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        if (event.error === "not-allowed") {
+          setSpeechNotice("Microphone permission denied. Please allow microphone access.");
+        } else if (event.error !== "no-speech") {
+          setSpeechNotice("Voice error: " + event.error);
+        }
+        setIsListening(false);
+        setTimeout(() => setSpeechNotice(null), 4500);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch {
+      setSpeechNotice("Could not start microphone.");
+      setIsListening(false);
+      setTimeout(() => setSpeechNotice(null), 4500);
+    }
+  };
+
+  // ----------------------------------------------------
+  // 📷 IMAGE INPUT (Native File Selection & Preview)
+  // ----------------------------------------------------
+  const handleImageButtonClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setSpeechNotice("Please select a valid image file (JPG, PNG, WebP).");
+      setTimeout(() => setSpeechNotice(null), 4000);
+      return;
+    }
+
+    let sizeFormatted = `${(file.size / 1024).toFixed(1)} KB`;
+    if (file.size >= 1024 * 1024) {
+      sizeFormatted = `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setSelectedImage({
+          dataUrl: reader.result,
+          name: file.name,
+          sizeFormatted,
+          mimeType: file.type || "image/jpeg",
+        });
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+  };
+
+  // ----------------------------------------------------
+  // 🔊 TEXT-TO-SPEECH (SpeechSynthesis API Listen Button)
+  // ----------------------------------------------------
+  const handleListenMessage = (msgId: string, text: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      setSpeechNotice("Speech synthesis is not supported in this browser.");
+      setTimeout(() => setSpeechNotice(null), 4000);
+      return;
+    }
+
+    if (speakingMsgId === msgId) {
+      window.speechSynthesis.cancel();
+      setSpeakingMsgId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const cleanText = text
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/[#*`_~>]/g, "")
+      .replace(/\[(.*?)\]\(.*?\)/g, "$1")
+      .trim();
+
+    if (!cleanText) return;
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+
+    utterance.onend = () => setSpeakingMsgId(null);
+    utterance.onerror = () => setSpeakingMsgId(null);
+
+    setSpeakingMsgId(msgId);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const copyMessageText = (msg: Message) => {
+    navigator.clipboard.writeText(msg.content);
+    setCopiedMsgId(msg.id);
+    setTimeout(() => setCopiedMsgId(null), 2000);
+  };
+
+  const handleRegenerate = () => {
+    const lastUserMsg = [...messages].reverse().find((m) => m.role === "user");
+    if (lastUserMsg) {
+      handleSend(lastUserMsg.content);
+    }
+  };
+
+  // ----------------------------------------------------
+  // 💬 SEND HANDLER
+  // ----------------------------------------------------
   const handleSend = async (textToSend?: string) => {
-    const query = (textToSend || input).trim();
-    if (!query || loading) return;
+    const query = (textToSend !== undefined ? textToSend : input).trim();
+    const currentImage = selectedImage;
+
+    if (!query && !currentImage) return;
+    if (loading) return;
 
     const userMsg: Message = {
       id: String(Date.now()),
       role: "user",
       content: query,
+      imageUrl: currentImage?.dataUrl,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
     setMessages((prev) => [...prev, userMsg]);
-    if (!textToSend) setInput("");
+    setInput("");
+    setSelectedImage(null);
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
     setLoading(true);
 
     try {
-      const history = messages
-        .filter((m) => m.id !== "welcome")
-        .map((m) => ({ role: m.role, content: m.content }));
+      // 1. If photo attached
+      if (currentImage) {
+        try {
+          const visionRes = await analyzeFood(currentImage.dataUrl, currentImage.mimeType);
+          const analysis = visionRes.data.analysis;
+          const reply = `### 📷 Photo Analysis Results\n\n- **Identified**: ${analysis.description || "Item"}\n- **Estimated Calories**: ~${analysis.calories} kcal\n- **Protein**: ~${analysis.protein}g\n- **Carbs**: ~${analysis.carbs}g\n- **Fats**: ~${analysis.fats}g\n- **Confidence**: ${analysis.confidence}\n\n${query ? `#### Regarding your note "${query}":\n\nThis fits into your daily macronutrient targets — let me know if you'd like help balancing the rest of your day around it.` : ""}`;
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: String(Date.now() + 1),
+              role: "assistant",
+              content: reply,
+              timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            },
+          ]);
+          setLoading(false);
+          return;
+        } catch (vErr) {
+          console.error("Vision API error:", vErr);
+        }
 
-      const res = await chatWithCoach(query, history);
-      const assistantMsg: Message = {
-        id: String(Date.now() + 1),
-        role: "assistant",
-        content: res.data.reply,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
-    } catch (err) {
-      console.error("Coach chat error:", err);
-      const errorMsg: Message = {
-        id: String(Date.now() + 1),
-        role: "assistant",
-        content: "Sorry, I had trouble processing that request. Please try asking again!",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
+        // Vision analysis failed (network error, rate limit, etc.)
+        let reply = `> ⚠️ I couldn't analyze that photo right now — the AI vision service may be temporarily unavailable or rate-limited. Please try again in a moment.\n\n`;
+        if (query) {
+          const generalAns = generateOfflineResponse(query, userName);
+          reply += `Regarding your question **"${query}"**:\n\n` + generalAns;
+        }
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: String(Date.now() + 1),
+            role: "assistant",
+            content: reply,
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
+        setLoading(false);
+        return;
+      }
+
+      // 2. Text-only query
+      try {
+        const history = messages.map((m) => ({ role: m.role, content: m.content }));
+        const res = await chatWithCoach(query, history);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: String(Date.now() + 1),
+            role: "assistant",
+            content: res.data.reply,
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
+      } catch {
+        // Fallback offline engine
+        const fallbackAns = generateOfflineResponse(query, userName);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: String(Date.now() + 1),
+            role: "assistant",
+            content: fallbackAns,
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const remainingCal = Math.max(0, calorieGoal - totalCalories);
-  const remainingProt = Math.max(0, proteinGoal - totalProtein);
-
-  const formatCoachText = (text: string) => {
-    const paragraphs = text.split("\n\n");
-    return paragraphs.map((p, idx) => {
-      const lines = p.split("\n");
-      return (
-        <p key={idx} style={{ margin: "0 0 10px 0", lineHeight: 1.6 }}>
-          {lines.map((line, lIdx) => {
-            const parts = line.split(/(\*\*.*?\*\*)/g);
-            return (
-              <span key={lIdx} style={{ display: line.startsWith("•") || line.startsWith("-") || line.match(/^\d+\./) ? "block" : "inline" }}>
-                {parts.map((part, pIdx) => {
-                  if (part.startsWith("**") && part.endsWith("**")) {
-                    return (
-                      <strong key={pIdx} style={{ color: "#ffffff", fontWeight: 700 }}>
-                        {part.slice(2, -2)}
-                      </strong>
-                    );
-                  }
-                  return part;
-                })}
-                {lIdx < lines.length - 1 && <br />}
-              </span>
-            );
-          })}
-        </p>
-      );
-    });
-  };
-
   return (
-    <div className="page-container page-enter" style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 40px)", maxWidth: 900 }}>
-      <div className="page-header" style={{ marginBottom: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-          <div>
-            <h1 style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Bot size={22} /> AI Coach Studio
-            </h1>
-            <p>Your 24/7 personal trainer, sports nutritionist, and progress diagnostic intelligence.</p>
-          </div>
+    <div className="coach-page">
+      {/* Hidden File Input for Native Image Upload */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="image/*"
+        onChange={handleImageFileChange}
+        style={{ display: "none" }}
+      />
 
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 11, background: "#152219", color: "#4ade80", padding: "4px 8px", borderRadius: 8, border: "1px solid #233629", fontWeight: 600 }}>
-              {remainingCal} kcal left
-            </span>
-            <span style={{ fontSize: 11, background: "#12232e", color: "#38bdf8", padding: "4px 8px", borderRadius: 8, border: "1px solid #1e384d", fontWeight: 600 }}>
-              {remainingProt}g protein left
-            </span>
-            <span style={{ fontSize: 11, background: "#1c182a", color: "#c084fc", padding: "4px 8px", borderRadius: 8, border: "1px solid #332654", fontWeight: 600 }}>
-              {steps.toLocaleString()} steps
-            </span>
-            <span style={{ fontSize: 11, background: "#0d222e", color: "#38bdf8", padding: "4px 8px", borderRadius: 8, border: "1px solid #163e54", fontWeight: 600 }}>
-              {waterMl}ml water
-            </span>
+      {/* ========================================================
+          PAGE HEADER
+      ======================================================== */}
+      <div className="coach-header">
+        <div className="coach-header-brand">
+          <div className="coach-header-logo">
+            <Sparkles size={20} />
+          </div>
+          <div>
+            <div className="coach-title-row">
+              <h1 className="coach-title">AI Coach</h1>
+              <span className="coach-engine-badge">
+                <span className="coach-status-dot" />
+                AI Coach Engine [Online]
+              </span>
+            </div>
+            <p className="coach-subtitle">
+              Your personal fitness intelligence
+            </p>
           </div>
         </div>
+
+        <button
+          onClick={handleNewChat}
+          className="coach-header-btn"
+          title="Start fresh conversation"
+          type="button"
+        >
+          <Plus size={14} /> New Chat
+        </button>
       </div>
 
-      <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 10, marginBottom: 10, scrollbarWidth: "none" }}>
-        {SUGGESTIONS.map((s, idx) => {
-          const Icon = s.icon;
-          return (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => handleSend(s.text)}
-              style={{
-                padding: "8px 12px",
-                background: "#0d1310",
-                border: "1px solid #1f2b23",
-                borderRadius: 20,
-                color: "#cbd5e1",
-                fontSize: 12,
-                fontWeight: 500,
-                whiteSpace: "nowrap",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                transition: "all 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#4ade80";
-                e.currentTarget.style.color = "#4ade80";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#1f2b23";
-                e.currentTarget.style.color = "#cbd5e1";
-              }}
-            >
-              <Icon size={14} /> {s.label}
-            </button>
-          );
-        })}
-      </div>
+      {/* Notice Banner */}
+      {speechNotice && (
+        <div
+          style={{
+            padding: "10px 16px",
+            background: "rgba(239, 68, 68, 0.12)",
+            border: "1px solid rgba(239, 68, 68, 0.25)",
+            borderRadius: 12,
+            color: "#f87171",
+            fontSize: 12.5,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <AlertCircle size={16} />
+          <span>{speechNotice}</span>
+        </div>
+      )}
 
-      <div
-        className="section-card"
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          display: "flex",
-          flexDirection: "column",
-          gap: 16,
-          padding: 16,
-          marginBottom: 12,
-          background: "#090d0b",
-        }}
-      >
+      {/* ========================================================
+          CHAT CANVAS
+      ======================================================== */}
+      <div className="coach-messages">
+        {/* Empty State when no messages */}
+        {messages.length === 0 && (
+          <div className="coach-empty-state">
+            <div className="coach-empty-icon">
+              <Sparkles size={22} />
+            </div>
+            <h2 className="coach-empty-title">
+              Your AI Fitness Coach
+            </h2>
+            <p className="coach-empty-subtitle">
+              Ask me anything about your training, nutrition, recovery or progress.
+            </p>
+
+            <div className="coach-starter-grid">
+              {STARTER_PROMPTS.map((card, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleSend(card.prompt)}
+                  className="coach-starter-card"
+                  type="button"
+                >
+                  <div className="coach-starter-header">
+                    <span style={{ fontSize: 20, lineHeight: 1 }}>{card.icon}</span>
+                    <div>
+                      <div className="coach-starter-title">{card.title}</div>
+                      <div className="coach-starter-sub">{card.subtitle}</div>
+                    </div>
+                  </div>
+                  <div className="coach-starter-desc">{card.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Message history */}
         {messages.map((m) => (
           <div
             key={m.id}
@@ -227,85 +685,186 @@ export default function Coach() {
               display: "flex",
               flexDirection: "column",
               alignItems: m.role === "user" ? "flex-end" : "flex-start",
+              gap: 4,
             }}
           >
-            <div
-              style={{
-                maxWidth: "85%",
-                padding: "12px 16px",
-                borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-                background: m.role === "user" ? "linear-gradient(135deg, #166534 0%, #15803d 100%)" : "#121a15",
-                border: m.role === "user" ? "1px solid #22c55e" : "1px solid #1f2d24",
-                color: m.role === "user" ? "#ffffff" : "#cbd5e1",
-                fontSize: 14,
-                boxShadow: m.role === "user" ? "0 2px 8px rgba(34, 197, 94, 0.2)" : "0 2px 8px rgba(0,0,0,0.3)",
-              }}
-            >
-              {m.role === "assistant" && (
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                  <Bot size={14} />
-                  <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.5px", color: "#4ade80", textTransform: "uppercase" }}>
-                    FitOS Intelligence Coach
-                  </span>
-                </div>
+            <div className={m.role === "user" ? "coach-user-card" : "coach-assistant-card"}>
+              <div className="coach-card-header">
+                <span className="coach-card-sender" style={{ color: m.role === "user" ? "#86efac" : "#4ade80" }}>
+                  {m.role === "user" ? "You" : "FitOS Coach"}
+                </span>
+                <span className="coach-card-time">{m.timestamp}</span>
+              </div>
+
+              {/* Image Preview in User Message */}
+              {m.imageUrl && (
+                <img
+                  src={m.imageUrl}
+                  alt="Attached upload"
+                  className="coach-attached-img"
+                />
               )}
-              <div>{formatCoachText(m.content)}</div>
-              <span style={{ fontSize: 10, color: m.role === "user" ? "rgba(255,255,255,0.7)" : "#7a8580", display: "block", textAlign: "right", marginTop: 4 }}>
-                {m.timestamp}
-              </span>
+
+              {/* Message Content */}
+              {m.role === "user" ? (
+                m.content ? <div style={{ fontSize: 14, lineHeight: 1.6, color: "#ffffff" }}>{m.content}</div> : null
+              ) : (
+                renderMarkdown(m.content)
+              )}
             </div>
+
+            {/* AI Message Action Toolbar */}
+            {m.role === "assistant" && (
+              <div className="coach-toolbar">
+                <button
+                  onClick={() => handleListenMessage(m.id, m.content)}
+                  className={`coach-tool-btn ${speakingMsgId === m.id ? "coach-tool-btn-active" : ""}`}
+                  title={speakingMsgId === m.id ? "Stop voice playback" : "Listen to response"}
+                  type="button"
+                >
+                  {speakingMsgId === m.id ? <VolumeX size={13} color="#fca5a5" /> : <Volume2 size={13} color="#4ade80" />}
+                  <span>{speakingMsgId === m.id ? "■ Stop" : "🔊 Listen"}</span>
+                </button>
+
+                <button
+                  onClick={() => copyMessageText(m)}
+                  className="coach-tool-btn"
+                  type="button"
+                >
+                  {copiedMsgId === m.id ? <Check size={12} color="#4ade80" /> : <Copy size={12} />}
+                  <span>{copiedMsgId === m.id ? "Copied" : "Copy"}</span>
+                </button>
+
+                <button
+                  onClick={handleRegenerate}
+                  className="coach-tool-btn"
+                  type="button"
+                >
+                  <RotateCcw size={12} />
+                  <span>Regenerate</span>
+                </button>
+              </div>
+            )}
           </div>
         ))}
 
         {loading && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "#121a15", borderRadius: 16, width: "fit-content", border: "1px solid #1f2d24" }}>
-            <Bot size={14} />
-            <span style={{ fontSize: 13, color: "#4ade80", fontWeight: 600 }}>FitOS Coach is analyzing your data...</span>
+          <div
+            style={{
+              alignSelf: "flex-start",
+              background: "#111713",
+              border: "1px solid #1e2620",
+              borderRadius: 12,
+              padding: "10px 14px",
+              color: "#4ade80",
+              fontSize: 12.5,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <Sparkles size={15} />
+            <span>Analyzing &amp; formulating response...</span>
           </div>
         )}
+
         <div ref={messagesEndRef} />
       </div>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSend();
-        }}
-        style={{ display: "flex", gap: 8, alignItems: "center" }}
-      >
-        <input
-          placeholder="Ask Coach: 'What should I eat next?', 'Why did my strength stall?'..."
+      {/* ========================================================
+          COMPOSER INPUT AREA
+      ======================================================== */}
+      <div className="coach-composer-wrap">
+        {/* 📷 Attached Image Preview Bar */}
+        {selectedImage && (
+          <div className="coach-preview-bar">
+            <div className="coach-preview-meta">
+              <img
+                src={selectedImage.dataUrl}
+                alt={selectedImage.name}
+                className="coach-preview-thumb"
+              />
+              <div>
+                <div className="coach-preview-name">{selectedImage.name}</div>
+                <div className="coach-preview-size">{selectedImage.sizeFormatted} • Ready to send</div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleRemoveImage}
+              className="coach-preview-remove"
+              title="Remove image"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
+        {/* Textarea */}
+        <textarea
+          ref={textareaRef}
+          rows={2}
+          placeholder={
+            selectedImage
+              ? "Ask something about this image... (e.g. calories, macros, form cues)"
+              : isListening
+              ? "Listening... Speak your question..."
+              : "Ask your AI Coach anything..."
+          }
           value={input}
-          onChange={(e) => setInput(e.target.value)}
-          disabled={loading}
-          style={{
-            flex: 1,
-            padding: "14px 18px",
-            borderRadius: 14,
-            background: "#0d1310",
-            border: "1px solid #233027",
-            color: "#ffffff",
-            fontSize: 14,
-            outline: "none",
+          onChange={(e) => {
+            setInput(e.target.value);
+            e.target.style.height = "auto";
+            e.target.style.height = Math.min(e.target.scrollHeight, 140) + "px";
           }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
+          className="coach-input-textarea"
         />
-        <button
-          type="submit"
-          className="primary-button"
-          disabled={!input.trim() || loading}
-          style={{
-            padding: "14px 22px",
-            borderRadius: 14,
-            fontWeight: 700,
-            fontSize: 14,
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
-          <span>Send</span> <Send size={14} />
-        </button>
-      </form>
+
+        {/* Action Controls Row */}
+        <div className="coach-controls-row">
+          <div className="coach-btn-group">
+            {/* 🎙️ Voice Button */}
+            <button
+              type="button"
+              onClick={handleToggleVoice}
+              className={`coach-input-btn ${isListening ? "coach-input-btn-active" : ""}`}
+              title={isListening ? "Stop listening" : "Speak using microphone"}
+            >
+              <Mic size={14} />
+              <span>{isListening ? "🔴 Listening..." : "🎙️ Voice"}</span>
+            </button>
+
+            {/* 📷 Photo Button */}
+            <button
+              type="button"
+              onClick={handleImageButtonClick}
+              className="coach-input-btn"
+              title="Attach photo"
+            >
+              <Camera size={14} />
+              <span>📷 Photo</span>
+            </button>
+          </div>
+
+          {/* ➤ Send Button */}
+          <button
+            type="button"
+            onClick={() => handleSend()}
+            disabled={(!input.trim() && !selectedImage) || loading}
+            className="coach-submit-btn"
+          >
+            <span>Send</span>
+            <ArrowUp size={14} strokeWidth={2.5} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
