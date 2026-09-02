@@ -3664,3 +3664,260 @@ select {
   }
 }
 
+/* =========================================================
+   WORKOUT PAGE & REUSABLE COMPONENTS
+========================================================= */
+
+.recovery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+  gap: 8px;
+}
+
+.recovery-card {
+  background: #0c130f;
+  padding: 8px 12px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recovery-card.fatigued {
+  border: 1px solid #592121;
+}
+
+.recovery-card.recovering {
+  border: 1px solid #594719;
+}
+
+.recovery-card.fresh {
+  border: 1px solid #1a3624;
+}
+
+.recovery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.recovery-muscle-name {
+  font-size: 13px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.recovery-status-badge {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.recovery-status-badge.fatigued { color: #f87171; }
+.recovery-status-badge.recovering { color: #fbbf24; }
+.recovery-status-badge.fresh { color: #4ade80; }
+
+.recovery-time {
+  font-size: 11px;
+  color: #8a968f;
+}
+
+.pr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.pr-card {
+  background: #0e1510;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid #203527;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pr-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.pr-est-1rm {
+  font-size: 11px;
+  color: #8a968f;
+}
+
+.pr-weight-value {
+  font-size: 16px;
+  color: #facc15;
+  font-weight: 700;
+}
+
+.pr-reps-count {
+  font-size: 11px;
+  color: #9da69f;
+  display: block;
+}
+
+.suggestion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.suggestion-card {
+  background: #0e1510;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #203527;
+}
+
+.suggestion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.suggestion-exercise-name {
+  font-size: 13px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.suggestion-target-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4ade80;
+}
+
+.suggestion-rec-text {
+  margin: 0;
+  font-size: 12px;
+  color: #9da69f;
+  line-height: 1.5;
+}
+
+.quick-template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.quick-template-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 12px 14px;
+  background: #0d1310;
+  border: 1px solid #1f2b23;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  font-family: inherit;
+}
+
+.quick-template-btn:hover {
+  border-color: #4ade80;
+  background: #121a14;
+}
+
+.quick-template-name {
+  font-size: 13px;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.quick-template-desc {
+  font-size: 11px;
+  color: #8a968f;
+}
+
+.routine-split-card {
+  background: #0a100d;
+  border: 1px solid #1c2a21;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.routine-split-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.routine-split-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #4ade80;
+}
+
+.routine-split-badge {
+  font-size: 11px;
+  background: #13231a;
+  color: #38bdf8;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.routine-split-desc {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  color: #cbd5e1;
+}
+
+.routine-days-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.routine-day-card {
+  background: #0f1612;
+  border: 1px solid #23352a;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.routine-day-title {
+  font-size: 13px;
+  color: #ffffff;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.routine-day-exercises {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.routine-day-exercise-item {
+  font-size: 11px;
+  color: #9da69f;
+}
+
+.workout-select-field {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #0f1511;
+  border: 1px solid #252d28;
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+}
+
+

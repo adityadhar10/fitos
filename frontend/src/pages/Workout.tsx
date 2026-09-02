@@ -232,124 +232,74 @@ export default function Workout() {
         <p>Real-time set logging, gym rest timer, personal records, and recovery tracking.</p>
       </div>
 
-      <RestTimer />
-
-      {muscleRecovery.length > 0 && (
-        <div className="section-card" style={{ marginBottom: 16 }}>
-          <div className="section-header" style={{ marginBottom: 10 }}>
-            <div>
-              <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>Muscle Recovery Readiness</h2>
-              <p className="subtext" style={{ margin: 0, fontSize: 12 }}>
-                Estimated muscle freshness based on your recent workout dates
-              </p>
-            </div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(135px, 1fr))", gap: 8 }}>
-            {muscleRecovery.map((m) => (
-              <div
-                key={m.muscle}
-                style={{
-                  background: "#0c130f",
-                  padding: "8px 12px",
-                  borderRadius: 10,
-                  border: `1px solid ${m.status === "Fatigued" ? "#592121" : m.status === "Recovering" ? "#594719" : "#1a3624"}`,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 4,
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <strong style={{ fontSize: 13, color: "#ffffff" }}>{m.muscle}</strong>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: m.status === "Fatigued" ? "#f87171" : m.status === "Recovering" ? "#fbbf24" : "#4ade80" }}>
-                    {m.status === "Fatigued" ? "Fatigued" : m.status === "Recovering" ? "Recovering" : "Fresh"}
-                  </span>
-                </div>
-                <span style={{ fontSize: 11, color: "#8a968f" }}>
-                  {m.hoursAgo !== null ? `${m.hoursAgo}h ago` : "Ready to train"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {suggestions.length > 0 && (
-        <div className="section-card" style={{ marginBottom: 16 }}>
-          <div className="section-header" style={{ marginBottom: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <TrendingUp size={18} color="#4ade80" />
-              <div>
-                <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>Progressive Overload Suggestions</h2>
-                <p className="subtext" style={{ margin: 0, fontSize: 12 }}>
-                  Data-driven targets for your next session, based on your last workout per exercise
-                </p>
-              </div>
-            </div>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {suggestions.slice(0, 5).map((s) => (
-              <div
-                key={s.exercise}
-                style={{
-                  background: "#0e1510",
-                  padding: "12px 14px",
-                  borderRadius: 12,
-                  border: "1px solid #203527",
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                  <strong style={{ fontSize: 13, color: "#ffffff" }}>{s.exercise}</strong>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "#4ade80" }}>
-                    {s.suggestedWeight}kg × {s.suggestedReps}
-                  </span>
-                </div>
-                <p style={{ margin: 0, fontSize: 12, color: "#9da69f", lineHeight: 1.5 }}>{s.recommendation}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {prs.length > 0 && (
-        <div className="section-card" style={{ marginBottom: 16 }}>
-          <div className="section-header" style={{ marginBottom: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <Trophy size={18} color="#facc15" />
-              <div>
-                <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>Personal Records (PRs)</h2>
-                <p className="subtext" style={{ margin: 0, fontSize: 12 }}>
-                  Your all-time max weight and estimated 1RM benchmarks
-                </p>
-              </div>
-            </div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
-            {prs.slice(0, 4).map((pr) => (
-              <div
-                key={pr.name}
-                style={{
-                  background: "#0e1510",
-                  padding: "10px 14px",
-                  borderRadius: 12,
-                  border: "1px solid #203527",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
+      {/* ── TIER 1: CURRENT STATUS & READINESS ── */}
+      {(muscleRecovery.length > 0 || prs.length > 0) && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {muscleRecovery.length > 0 && (
+            <div className="section-card">
+              <div className="section-header" style={{ marginBottom: 12 }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#ffffff" }}>{pr.name}</h3>
-                  <span style={{ fontSize: 11, color: "#8a968f" }}>Est. 1RM: {pr.bestEstimated1RM}kg</span>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <strong style={{ fontSize: 16, color: "#facc15" }}>{pr.maxWeight}kg</strong>
-                  <span style={{ fontSize: 11, color: "#9da69f", display: "block" }}>× {pr.repsAtMaxWeight}r</span>
+                  <h2 className="section-title">Muscle Recovery Readiness</h2>
+                  <p className="subtext" style={{ margin: 0 }}>
+                    Estimated muscle freshness based on your recent workout dates
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
+              <div className="recovery-grid">
+                {muscleRecovery.map((m) => {
+                  const statusClass = m.status === "Fatigued" ? "fatigued" : m.status === "Recovering" ? "recovering" : "fresh";
+                  return (
+                    <div key={m.muscle} className={`recovery-card ${statusClass}`}>
+                      <div className="recovery-header">
+                        <strong className="recovery-muscle-name">{m.muscle}</strong>
+                        <span className={`recovery-status-badge ${statusClass}`}>
+                          {m.status === "Fatigued" ? "Fatigued" : m.status === "Recovering" ? "Recovering" : "Fresh"}
+                        </span>
+                      </div>
+                      <span className="recovery-time">
+                        {m.hoursAgo !== null ? `${m.hoursAgo}h ago` : "Ready to train"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {prs.length > 0 && (
+            <div className="section-card">
+              <div className="section-header" style={{ marginBottom: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Trophy size={18} color="#facc15" />
+                  <div>
+                    <h2 className="section-title">Personal Records (PRs)</h2>
+                    <p className="subtext" style={{ margin: 0 }}>
+                      Your all-time max weight and estimated 1RM benchmarks
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="pr-grid">
+                {prs.slice(0, 4).map((pr) => (
+                  <div key={pr.name} className="pr-card">
+                    <div>
+                      <h3 className="pr-title">{pr.name}</h3>
+                      <span className="pr-est-1rm">Est. 1RM: {pr.bestEstimated1RM}kg</span>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <strong className="pr-weight-value">{pr.maxWeight}kg</strong>
+                      <span className="pr-reps-count">× {pr.repsAtMaxWeight}r</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
+
+      {/* ── TIER 2: WHAT TO DO NEXT (TIMER & LOGGING) ── */}
+      <RestTimer />
 
       {showRoutineModal && (
         <RoutineGeneratorModal
@@ -387,8 +337,8 @@ export default function Workout() {
           <>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
               <div>
-                <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Training Splits & AI Generator</h2>
-                <p className="subtext" style={{ margin: "2px 0 0 0", fontSize: 12 }}>
+                <h2 className="section-title">Training Splits & AI Generator</h2>
+                <p className="subtext" style={{ margin: "2px 0 0 0" }}>
                   Pre-built scientific splits or let FitOS AI build a tailored routine for your gear
                 </p>
               </div>
@@ -404,42 +354,23 @@ export default function Workout() {
 
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {routineTemplates.map((r) => (
-                <div
-                  key={r.id}
-                  style={{
-                    background: "#0a100d",
-                    border: "1px solid #1c2a21",
-                    borderRadius: 14,
-                    padding: 16,
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                    <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#4ade80" }}>{r.name}</h3>
-                    <span style={{ fontSize: 11, background: "#13231a", color: "#38bdf8", padding: "2px 8px", borderRadius: 6, fontWeight: 600 }}>
+                <div key={r.id} className="routine-split-card">
+                  <div className="routine-split-header">
+                    <h3 className="routine-split-title">{r.name}</h3>
+                    <span className="routine-split-badge">
                       {r.daysPerWeek} Days / wk ({r.splitType})
                     </span>
                   </div>
-                  <p style={{ margin: "0 0 12px 0", fontSize: 13, color: "#cbd5e1" }}>{r.description}</p>
+                  <p className="routine-split-desc">{r.description}</p>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+                  <div className="routine-days-grid">
                     {r.schedule.map((day, dIdx) => (
-                      <div
-                        key={dIdx}
-                        style={{
-                          background: "#0f1612",
-                          border: "1px solid #23352a",
-                          borderRadius: 10,
-                          padding: "10px 12px",
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "space-between",
-                        }}
-                      >
+                      <div key={dIdx} className="routine-day-card">
                         <div>
-                          <strong style={{ fontSize: 13, color: "#ffffff", display: "block", marginBottom: 6 }}>{day.day}</strong>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 10 }}>
+                          <strong className="routine-day-title">{day.day}</strong>
+                          <div className="routine-day-exercises">
                             {day.exercises.map((ex, eIdx) => (
-                              <span key={eIdx} style={{ fontSize: 11, color: "#9da69f" }}>
+                              <span key={eIdx} className="routine-day-exercise-item">
                                 • {ex.name} ({ex.sets} × {ex.reps})
                               </span>
                             ))}
@@ -474,7 +405,7 @@ export default function Workout() {
             {!showForm && (
               <div style={{ marginBottom: 20 }}>
                 <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>Quick Start Templates</h2>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
+                <div className="quick-template-grid">
                   {TEMPLATES.map((template) => {
                     const Icon = template.icon;
                     return (
@@ -488,25 +419,11 @@ export default function Workout() {
                             exercises: template.exercises,
                           })
                         }
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "flex-start",
-                          gap: 6,
-                          padding: "12px 14px",
-                          background: "#0d1310",
-                          border: "1px solid #1f2b23",
-                          borderRadius: 12,
-                          cursor: "pointer",
-                          textAlign: "left",
-                          transition: "border-color 0.15s ease",
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#4ade80")}
-                        onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1f2b23")}
+                        className="quick-template-btn"
                       >
                         <Icon size={18} color="#4ade80" />
-                        <strong style={{ fontSize: 13, color: "#ffffff" }}>{template.name}</strong>
-                        <span style={{ fontSize: 11, color: "#8a968f" }}>{template.desc}</span>
+                        <strong className="quick-template-name">{template.name}</strong>
+                        <span className="quick-template-desc">{template.desc}</span>
                       </button>
                     );
                   })}
@@ -536,16 +453,7 @@ export default function Workout() {
                 <select
                   value={muscleGroup}
                   onChange={(e) => setMuscleGroup(e.target.value)}
-                  style={{
-                    padding: "10px 14px",
-                    borderRadius: 10,
-                    background: "#0f1511",
-                    border: "1px solid #252d28",
-                    color: muscleGroup ? "#ffffff" : "#7a8580",
-                    fontSize: 14,
-                    outline: "none",
-                    width: "100%",
-                  }}
+                  className="workout-select-field"
                 >
                   <option value="">Target Muscle Group (Auto-detect / Optional)</option>
                   <option value="Chest">Chest</option>
@@ -667,6 +575,36 @@ export default function Workout() {
           </>
         )}
       </div>
+
+      {/* ── TIER 3: TRAINING ANALYSIS & SUGGESTIONS ── */}
+      {suggestions.length > 0 && (
+        <div className="section-card">
+          <div className="section-header" style={{ marginBottom: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <TrendingUp size={18} color="#4ade80" />
+              <div>
+                <h2 className="section-title">Progressive Overload Suggestions</h2>
+                <p className="subtext" style={{ margin: 0 }}>
+                  Data-driven targets for your next session, based on your last workout per exercise
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="suggestion-list">
+            {suggestions.slice(0, 5).map((s) => (
+              <div key={s.exercise} className="suggestion-card">
+                <div className="suggestion-header">
+                  <strong className="suggestion-exercise-name">{s.exercise}</strong>
+                  <span className="suggestion-target-value">
+                    {s.suggestedWeight}kg × {s.suggestedReps}
+                  </span>
+                </div>
+                <p className="suggestion-rec-text">{s.recommendation}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
