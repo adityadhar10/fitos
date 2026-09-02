@@ -2,11 +2,9 @@ import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-interface LoginProps {
-  onSwitchToSignup?: () => void;
-}
+import axios from "axios";
 
-function Login({ }: LoginProps) {
+function Login() {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,11 +17,15 @@ function Login({ }: LoginProps) {
     setLoading(true);
     try {
       await login(email, password);
-    } catch (err: any) {
-      if (!err.response) {
-        setError("Unable to connect to the FitOS server. Please check your connection or start the backend server.");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        if (!err.response) {
+          setError("Unable to connect to the FitOS server. Please check your connection or start the backend server.");
+        } else {
+          setError(err.response.data?.error || "Login failed. Please check your credentials and try again.");
+        }
       } else {
-        setError(err?.response?.data?.error || "Login failed. Please check your credentials and try again.");
+        setError("An unexpected error occurred. Please try again.");
       }
     } finally {
       setLoading(false);

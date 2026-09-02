@@ -2,11 +2,9 @@ import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-interface SignupProps {
-  onSwitchToLogin?: () => void;
-}
+import axios from "axios";
 
-function Signup({ }: SignupProps) {
+function Signup() {
   const { signup } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -20,8 +18,12 @@ function Signup({ }: SignupProps) {
     setLoading(true);
     try {
       await signup(name, email, password);
-    } catch (err: any) {
-      setError(err?.response?.data?.error || "Signup failed. Please try again.");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.error || "Signup failed. Please try again.");
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
