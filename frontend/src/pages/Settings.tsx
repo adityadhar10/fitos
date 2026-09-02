@@ -211,8 +211,6 @@ export default function Settings() {
         </form>
       </div>
 
-      {/* ── SCIENCE-BASED TDEE & MACRO CALCULATOR ── */}
-
       {/* ── PREFERENCES ── */}
       <div className="section-card">
         <h2 className="section-title">Preferences</h2>
@@ -262,7 +260,6 @@ export default function Settings() {
                   className="export-download-btn"
                   onClick={() => handleExport(btn)}
                   disabled={exporting === btn.id}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                 >
                   {exporting === btn.id ? 'Downloading…' : (<><Download size={14} /> Download</>)}
                 </button>
