@@ -5,23 +5,30 @@ import { z } from 'zod';
 import prisma from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
+import { createRateLimiter } from '../middleware/rateLimiter.js';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-this';
 
+const authLimiter = createRateLimiter(
+  5 * 60 * 1000,
+  15,
+  'Too many attempts. Please try again in 5 minutes.'
+);
+
 // ── Zod schemas ──────────────────────────────────────────────────────────────
-const signupSchema = z.object({
+export const signupSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
-const loginSchema = z.object({
+export const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),
 });
 
-const updateGoalsSchema = z.object({
+export const updateGoalsSchema = z.object({
   calorieGoal: z.coerce.number().int().positive().optional(),
   proteinGoal: z.coerce.number().int().positive().optional(),
   carbGoal: z.coerce.number().int().positive().optional(),
@@ -29,7 +36,7 @@ const updateGoalsSchema = z.object({
 });
 
 // ── POST /api/auth/signup ────────────────────────────────────────────────────
-router.post('/signup', validate(signupSchema), async (req: Request, res: Response) => {
+router.post('/signup', authLimiter, validate(signupSchema), async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
 
@@ -53,7 +60,7 @@ router.post('/signup', validate(signupSchema), async (req: Request, res: Respons
 });
 
 // ── POST /api/auth/login ─────────────────────────────────────────────────────
-router.post('/login', validate(loginSchema), async (req: Request, res: Response) => {
+router.post('/login', authLimiter, validate(loginSchema), async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 

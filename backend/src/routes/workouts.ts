@@ -7,7 +7,7 @@ import { validate } from '../middleware/validate.js';
 const router = Router();
 
 // ── Zod schemas ──────────────────────────────────────────────────────────────
-const addWorkoutSchema = z.object({
+export const addWorkoutSchema = z.object({
   name: z.string().min(1, 'Workout name is required').max(100),
   muscleGroup: z.string().max(50).optional(),
   sets: z
