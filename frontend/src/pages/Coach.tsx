@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import "../index.css";
-import { chatWithCoach, getMeals, getTodayMetrics, analyzeFood } from "../services/api";
+import { chatWithCoach, analyzeFood } from "../services/api";
 import { useAuth } from "../context/AuthContext";
-import { DEFAULT_CALORIE_GOAL, DEFAULT_PROTEIN_GOAL } from "../constants/goals";
 import {
   Sparkles,
   Camera,
@@ -226,13 +225,6 @@ export default function Coach() {
   const { user } = useAuth();
   const userName = user?.name ? user.name.split(" ")[0] : "Athlete";
 
-  const calorieGoal = user?.calorieGoal ?? DEFAULT_CALORIE_GOAL;
-  const proteinGoal = user?.proteinGoal ?? DEFAULT_PROTEIN_GOAL;
-
-  const [totalCalories, setTotalCalories] = useState(0);
-  const [totalProtein, setTotalProtein] = useState(0);
-  const [steps, setSteps] = useState(0);
-
   // Chat messages
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -270,17 +262,6 @@ export default function Coach() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
-
-  useEffect(() => {
-    Promise.all([getMeals(), getTodayMetrics()])
-      .then(([mealsRes, metricsRes]) => {
-        const meals = mealsRes.data.meals as { calories: number; protein: number }[];
-        setTotalCalories(meals.reduce((sum, m) => sum + m.calories, 0));
-        setTotalProtein(meals.reduce((sum, m) => sum + m.protein, 0));
-        setSteps(metricsRes.data.metric?.steps || 0);
-      })
-      .catch((err) => console.error("Failed to load coach metrics context:", err));
-  }, []);
 
   // Cleanup speech on unmount
   useEffect(() => {
