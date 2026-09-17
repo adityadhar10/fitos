@@ -46,9 +46,11 @@ export default function Workout() {
   ]);
 
   // UI Modals
-  const [celebrationPR, setCelebrationPR] = useState(null);
+  const [celebrationPR, setCelebrationPR] = useState<any>(null);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [showErrorToast, setShowErrorToast] = useState("");
   
-  const [analysisWorkout, setAnalysisWorkout] = useState(null);
+  const [analysisWorkout, setAnalysisWorkout] = useState<any>(null);
   
   // AI Coach State
   const [isAdvising, setIsAdvising] = useState(false);
@@ -176,9 +178,13 @@ export default function Workout() {
       setFormExercises([{ id: "ex_1", name: "", muscleGroup: "", sets: [{ reps: "", weight: "" }] }]);
       setShowForm(false);
       loadData();
+      
+      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(false), 3000);
     } catch (err) {
       console.error("Failed to save workout session:", err);
-      alert("Failed to save workout.");
+      setShowErrorToast("Failed to save workout.");
+      setTimeout(() => setShowErrorToast(""), 3000);
     } finally {
       setSaving(false);
     }
@@ -191,7 +197,8 @@ export default function Workout() {
       setAdviceResult(data);
     } catch (e) {
       console.error(e);
-      alert("Failed to get training advice.");
+      setShowErrorToast("Failed to get training advice.");
+      setTimeout(() => setShowErrorToast(""), 3000);
     } finally {
       setIsAdvising(false);
     }
@@ -585,6 +592,64 @@ export default function Workout() {
           prs={prs}
           onClose={() => setAnalysisWorkout(null)}
         />
+      )}
+
+      {showSuccessToast && (
+        <>
+          <style>{`
+            @keyframes toastSlideIn {
+              from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+              to { opacity: 1; transform: translateY(0) scale(1); }
+            }
+          `}</style>
+          <div style={{
+            position: "fixed",
+            top: 24,
+            right: 24,
+            zIndex: 999999,
+            background: "#111713",
+            border: "1px solid #1e2620",
+            borderLeft: "4px solid #4ade80",
+            borderRadius: 8,
+            padding: "16px 20px",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
+            animation: "toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+            width: "max-content",
+            maxWidth: "calc(100vw - 48px)"
+          }}>
+            <Check size={20} color="#4ade80" />
+            <span style={{ color: "#fff", fontSize: 14, fontWeight: 500 }}>Workout saved successfully</span>
+          </div>
+        </>
+      )}
+
+      {showErrorToast && (
+        <>
+          <div style={{
+            position: "fixed",
+            top: 24,
+            right: 24,
+            zIndex: 999999,
+            background: "#111713",
+            border: "1px solid #1e2620",
+            borderLeft: "4px solid #ef4444",
+            borderRadius: 8,
+            padding: "16px 20px",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
+            animation: "toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+            width: "max-content",
+            maxWidth: "calc(100vw - 48px)"
+          }}>
+            <X size={20} color="#ef4444" />
+            <span style={{ color: "#fff", fontSize: 14, fontWeight: 500 }}>{showErrorToast}</span>
+          </div>
+        </>
       )}
 
     </div>
