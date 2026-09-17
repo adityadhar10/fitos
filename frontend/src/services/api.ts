@@ -114,3 +114,20 @@ export const exportWeightCSV     = () => downloadExport('/export/weight-csv',   
 // ---- Text-based nutrition estimation ----
 export const estimateNutritionFromText = (description: string) =>
   api.post('/vision/estimate-text', { description });
+
+// ── AI Workout Features ───────────────────────────────────────────────────────
+export const analyzeWorkout = (data: any) => {
+  return api.post('/workouts/analyze', data).then(res => res.data);
+};
+
+export const getTrainingAdvice = () => {
+  return api.post('/workouts/advice', {}).then(res => res.data);
+};
+
+export const addWorkoutSession = (
+  name: string,
+  date: string,
+  exercises: { name: string; muscleGroup?: string; sets: { reps: number; weight: number }[] }[]
+) => api.post("/workouts/session", { name, date, exercises });
+
+export const getWorkoutSessions = () => api.get("/workouts/sessions");

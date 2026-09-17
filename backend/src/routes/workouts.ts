@@ -3,10 +3,30 @@ import { z } from 'zod';
 import prisma from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
+import { GoogleGenAI } from '@google/genai';
 
 const router = Router();
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 // ── Zod schemas ──────────────────────────────────────────────────────────────
+
+export const addWorkoutSessionSchema = z.object({
+  name: z.string().max(100),
+  date: z.string().optional(),
+  exercises: z.array(
+    z.object({
+      name: z.string().min(1).max(100),
+      muscleGroup: z.string().max(50).optional(),
+      sets: z.array(
+        z.object({
+          reps: z.coerce.number().int().positive(),
+          weight: z.coerce.number().nonnegative(),
+        })
+      ).min(1),
+    })
+  ).min(1),
+});
+
 export const addWorkoutSchema = z.object({
   name: z.string().min(1, 'Workout name is required').max(100),
   muscleGroup: z.string().max(50).optional(),
@@ -25,7 +45,7 @@ router.get('/prs', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const workouts = await prisma.workout.findMany({
       where: { userId: req.userId },
-      include: { sets: true },
+      include: { sets: true, workoutSession: true },
       orderBy: { date: 'desc' },
     });
 
@@ -187,6 +207,24 @@ router.get('/suggestions', requireAuth, async (req: AuthRequest, res: Response) 
 });
 
 // ── GET /api/workouts ────────────────────────────────────────────────────────
+
+router.get('/sessions', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const sessions = await prisma.workoutSession.findMany({
+      where: { userId: req.userId! },
+      orderBy: { date: 'desc' },
+      include: {
+        workouts: {
+          include: { sets: true }
+        }
+      }
+    });
+    res.json({ sessions });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch sessions.' });
+  }
+});
+
 router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const workouts = await prisma.workout.findMany({
@@ -204,6 +242,47 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
 });
 
 // ── POST /api/workouts ───────────────────────────────────────────────────────
+
+router.post('/session', requireAuth, validate(addWorkoutSessionSchema), async (req: AuthRequest, res: Response) => {
+  try {
+    const { name, date, exercises } = req.body;
+    
+    // Create Session
+    const session = await prisma.workoutSession.create({
+      data: {
+        userId: req.userId!,
+        name: name || 'Workout Session',
+        date: date ? new Date(date) : new Date(),
+        workouts: {
+          create: exercises.map((ex: any) => ({
+            userId: req.userId!,
+            name: ex.name,
+            muscleGroup: ex.muscleGroup || null,
+            sets: {
+              create: ex.sets.map((s: any) => ({
+                reps: s.reps,
+                weight: s.weight,
+              })),
+            },
+          })),
+        },
+      },
+      include: {
+        workouts: {
+          include: { sets: true },
+        },
+      },
+    });
+
+    res.status(201).json({ session });
+  } catch (error) {
+    console.error('Create workout session error:', error);
+    res.status(500).json({ error: 'Failed to create workout session.' });
+  }
+});
+
+// also fetch sessions in GET /
+
 router.post('/', requireAuth, validate(addWorkoutSchema), async (req: AuthRequest, res: Response) => {
   try {
     const { name, muscleGroup, sets } = req.body;
@@ -252,6 +331,167 @@ router.delete('/:id', requireAuth, async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Delete workout error:', error);
     res.status(500).json({ error: 'Failed to delete workout.' });
+  }
+});
+
+
+// ── POST /api/workouts/analyze ──────────────────────────────────────────────────
+
+router.post('/analyze', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { sessionName, sessionDate, exercises, historicalContext, totalSessionVolume, totalSets, totalReps, personalRecords } = req.body;
+    
+    const prompt = `You are a professional strength and conditioning analyst inside FitOS.
+
+Analyze the following workout session and produce a structured, specific assessment based exclusively on the data provided. Do not give generic advice. Reason from the actual numbers.
+
+CURRENT SESSION:
+Name: ${sessionName}
+Date: ${sessionDate}
+Total Sets: ${totalSets}
+Total Reps: ${totalReps}
+Total Volume: ${totalSessionVolume} kg
+
+Exercises this session:
+${JSON.stringify(exercises, null, 2)}
+
+HISTORICAL COMPARISON (previous sessions for the same exercises):
+${historicalContext && historicalContext.length > 0 ? JSON.stringify(historicalContext, null, 2) : 'No previous data available for these exercises.'}
+
+PERSONAL RECORDS:
+${personalRecords && personalRecords.length > 0 ? JSON.stringify(personalRecords, null, 2) : 'No records found.'}
+
+INSTRUCTIONS:
+- Compare current session to previous sessions where data exists.
+- Identify progressions (higher weight, more reps, more volume) and regressions.
+- Identify patterns across the full session, not just the heaviest set.
+- If there is no historical data, state that clearly and base analysis on the current session only.
+- Do NOT use emojis.
+- Do NOT give generic advice like "maintain good form" unless it is genuinely supported by the data.
+
+Return a JSON object with EXACTLY this structure (omit fields that do not apply):
+{
+  "summary": "2-3 sentence specific assessment of this session",
+  "progression": "specific comparison to previous sessions, or null if no history",
+  "keyObservation": "the single most important pattern detected",
+  "nextWorkout": ["specific, situation-based action 1", "specific action 2"],
+  "whatToAvoid": ["specific caution 1 if relevant"]
+}
+Respond ONLY with valid JSON. No markdown.`;
+
+    const result = await genAI.models.generateContent({
+      model: 'gemini-2.0-flash-lite',
+      contents: prompt,
+    });
+    
+    let text = result.text || '';
+    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    
+    let data: any;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) {
+        data = JSON.parse(match[0]);
+      } else {
+        throw new Error('Could not parse AI response as JSON');
+      }
+    }
+    
+    // Remove null fields
+    Object.keys(data).forEach(k => { if (data[k] === null) delete data[k]; });
+
+    res.json(data);
+  } catch (error) {
+    console.error('Analyze error:', error);
+    res.status(500).json({ error: 'Failed to analyze.' });
+  }
+});
+
+router.post('/advice', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const recentSessions = await prisma.workoutSession.findMany({
+      where: { userId: req.userId! },
+      orderBy: { date: 'desc' },
+      take: 10,
+      include: { workouts: { include: { sets: true } } }
+    });
+    
+    if (!recentSessions || recentSessions.length === 0) {
+      return res.json({
+        summary: 'No recent workout history found.',
+        priority: [],
+        whatToDo: ['Log a few workouts to unlock personalized training recommendations.'],
+        whatToAvoid: [],
+        why: 'Insufficient data to generate a recommendation.',
+      });
+    }
+
+    const context = recentSessions.map(s => ({
+      name: s.name,
+      date: s.date.toISOString(),
+      exercises: s.workouts.map(w => ({
+        name: w.name,
+        muscleGroup: w.muscleGroup,
+        sets: w.sets.length,
+        totalReps: w.sets.reduce((sum, set) => sum + set.reps, 0),
+        totalVolume: Math.round(w.sets.reduce((sum, set) => sum + set.reps * set.weight, 0)),
+        topWeight: w.sets.length > 0 ? Math.max(...w.sets.map(s => s.weight)) : 0,
+      }))
+    }));
+
+    const prompt = `You are a professional training coach inside FitOS.
+Analyze the user's recent workout history and produce specific, data-driven next-session recommendations.
+Reason ONLY from the data provided. Do not invent sessions or exercises.
+
+RECENT SESSIONS (newest first):
+${JSON.stringify(context, null, 2)}
+
+INSTRUCTIONS:
+- Identify which muscle groups were trained recently and which are overdue.
+- Look for progression or regression trends in weights and volume.
+- Identify imbalances in training frequency between muscle groups.
+- Base your recommendation on what the data actually shows.
+- Do NOT use emojis.
+- Do NOT give generic advice unless clearly supported by the data.
+
+Return a JSON object with EXACTLY this structure:
+{
+  "summary": "2-3 sentence assessment of recent training",
+  "priority": [
+    {"order": 1, "focus": "muscle group or focus area", "reason": "specific data-based reason", "suggestedApproach": "what to do and how"}
+  ],
+  "whatToDo": ["specific action 1", "specific action 2"],
+  "whatToAvoid": ["specific caution 1"],
+  "why": "brief explanation of the reasoning behind this recommendation"
+}
+Respond ONLY with valid JSON. No markdown. No emojis.`;
+
+    const result = await genAI.models.generateContent({
+      model: 'gemini-2.0-flash-lite',
+      contents: prompt,
+    });
+    
+    let text = result.text || '';
+    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    
+    let data: any;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) {
+        data = JSON.parse(match[0]);
+      } else {
+        throw new Error('Could not parse AI response as JSON');
+      }
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Advice error:', error);
+    res.status(500).json({ error: 'Failed to get advice.' });
   }
 });
 

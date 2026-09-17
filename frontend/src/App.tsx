@@ -100,7 +100,7 @@ function AppShell() {
             <span className="sidebar-icon-wrap">
               <LogOut size={18} />
             </span>
-            <span className="sidebar-label">Log Out</span>
+            <span className="sidebar-label">Sign Out</span>
           </button>
         </div>
       </aside>

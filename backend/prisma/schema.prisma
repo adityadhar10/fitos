@@ -19,6 +19,7 @@ model User {
 
   meals        Meal[]
   workouts     Workout[]
+  workoutSessions WorkoutSession[]
   weightLogs   WeightEntry[]
   dailyMetrics DailyMetric[]
   badges       UserBadge[]
@@ -47,7 +48,19 @@ model Meal {
   createdAt   DateTime @default(now())
 }
 
+
+model WorkoutSession {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  date      DateTime  @default(now())
+  workouts  Workout[]
+}
+
 model Workout {
+  workoutSessionId String?
+  workoutSession   WorkoutSession? @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
   id          String   @id @default(uuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)

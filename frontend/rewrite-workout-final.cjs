@@ -1,4 +1,6 @@
+const fs = require('fs');
 
+const jsx = `
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // @ts-nocheck
 import React, { useEffect, useState } from "react";
@@ -17,7 +19,7 @@ import RestTimer from "../components/RestTimer";
 import ExercisePicker from "../components/ExercisePicker";
 import PRCelebrationModal from "../components/PRCelebrationModal";
 import WorkoutAnalysisModal from "../components/WorkoutAnalysisModal";
-import AIRoutineBuilder from "../components/AIRoutineBuilder";
+import RoutineGeneratorModal from "../components/RoutineGeneratorModal";
 import OneRepMaxCalculator from "../components/OneRepMaxCalculator";
 import { 
   getWorkoutSessions,
@@ -28,7 +30,7 @@ import {
   getTrainingAdvice 
 } from "../services/api";
 import { getWorkoutMuscleInfo, TEMPLATES } from "../data/exercises";
- // We will add a small CSS file for any specific things if needed, or rely on inline
+import "../pages/Workout.css"; // We will add a small CSS file for any specific things if needed, or rely on inline
 
 export default function Workout() {
   const [sessions, setSessions] = useState<any[]>([]);
@@ -47,7 +49,7 @@ export default function Workout() {
 
   // UI Modals
   const [celebrationPR, setCelebrationPR] = useState(null);
-  
+  const [showRoutineModal, setShowRoutineModal] = useState(false);
   const [analysisWorkout, setAnalysisWorkout] = useState(null);
   
   // AI Coach State
@@ -187,8 +189,8 @@ export default function Workout() {
   const handleGetAdvice = async () => {
     setIsAdvising(true);
     try {
-      const data = await getTrainingAdvice();
-      setAdviceResult(data);
+      const res = await getTrainingAdvice();
+      setAdviceResult(res.data);
     } catch (e) {
       console.error(e);
       alert("Failed to get training advice.");
@@ -226,9 +228,9 @@ export default function Workout() {
               const actionableStatus = m.status === "Fatigued" ? "Rest Needed" : m.status === "Recovering" ? "1 Day Left" : "Ready to Train";
               const advice = m.status === "Fatigued" ? "Still recovering" : m.status === "Recovering" ? "Almost recovered" : "Ready";
               return (
-                <div key={m.muscle} className={`recovery-card ${statusClass}`} style={{ display: "flex", flexDirection: "column", padding: 16, background: "var(--bg-elevated)", border: "1px solid var(--border-color)", borderRadius: 12 }}>
+                <div key={m.muscle} className={\`recovery-card \${statusClass}\`} style={{ display: "flex", flexDirection: "column", padding: 16, background: "var(--bg-elevated)", border: "1px solid var(--border-color)", borderRadius: 12 }}>
                   <strong style={{ fontSize: 14, color: "var(--text-primary)", marginBottom: 8 }}>{m.muscle}</strong>
-                  <span style={{ fontSize: 13, fontWeight: "bold", marginBottom: 4 }} className={`recovery-status-badge ${statusClass}`}>{actionableStatus}</span>
+                  <span style={{ fontSize: 13, fontWeight: "bold", marginBottom: 4 }} className={\`recovery-status-badge \${statusClass}\`}>{actionableStatus}</span>
                   <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{advice}</span>
                 </div>
               );
@@ -474,8 +476,14 @@ export default function Workout() {
               <Users size={18} color="var(--primary-accent)" /> AI Routine Builder
             </h3>
             <p style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 20 }}>Generate a custom training split dynamically tailored to your goals, available days, and experience level.</p>
-            <div style={{ marginTop: "16px", flexGrow: 1 }}>
-              <AIRoutineBuilder onStartWorkout={handleStartCustomWorkout} />
+            <div style={{ marginTop: "auto" }}>
+              <button 
+                className="action-btn primary"
+                onClick={() => setShowRoutineModal(true)}
+                style={{ width: "100%", padding: "12px", fontSize: 14 }}
+              >
+                Generate Routine
+              </button>
             </div>
           </div>
 
@@ -515,7 +523,7 @@ export default function Workout() {
               <h3 style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: "1px", color: "var(--text-muted)", marginBottom: 12 }}>Your Next Training Recommendation</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {adviceResult.priority?.map((p: any, i: number) => (
-                  <div key={i} style={{ background: "var(--bg-elevated)", borderLeft: `4px solid ${i === 0 ? "var(--primary-accent)" : "var(--border-color)"}`, padding: "16px 20px", borderRadius: "0 8px 8px 0", border: "1px solid var(--border-color)", borderLeftWidth: 4 }}>
+                  <div key={i} style={{ background: "var(--bg-elevated)", borderLeft: \`4px solid \${i === 0 ? "var(--primary-accent)" : "var(--border-color)"}\`, padding: "16px 20px", borderRadius: "0 8px 8px 0", border: "1px solid var(--border-color)", borderLeftWidth: 4 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
                       <strong style={{ fontSize: 15, color: "var(--text-primary)" }}>0{p.order} {p.focus.toUpperCase()}</strong>
                       <span style={{ fontSize: 11, background: "var(--bg-input)", padding: "2px 8px", borderRadius: 100, color: "var(--text-secondary)" }}>
@@ -577,12 +585,20 @@ export default function Workout() {
         />
       )}
       
-      
-{analysisWorkout && (
+      {showRoutineModal && (
+        <RoutineGeneratorModal
+          onClose={() => setShowRoutineModal(false)}
+          onStartWorkout={(routine: any) => {
+            handleStartCustomWorkout(routine);
+            setShowRoutineModal(false);
+          }}
+        />
+      )}
+
+      {analysisWorkout && (
         <WorkoutAnalysisModal
-          session={analysisWorkout}
-          allSessions={sessions}
-          prs={prs}
+          sessionName={analysisWorkout.name}
+          exercises={analysisWorkout.workouts}
           onClose={() => setAnalysisWorkout(null)}
         />
       )}
@@ -590,3 +606,7 @@ export default function Workout() {
     </div>
   );
 }
+`;
+
+fs.writeFileSync('frontend/src/pages/Workout.tsx', jsx);
+console.log("Workout.tsx rewritten completely.");

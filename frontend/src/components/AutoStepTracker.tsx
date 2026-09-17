@@ -8,6 +8,7 @@ interface AutoStepTrackerProps {
 export default function AutoStepTracker({ initialSteps, onStepsChange }: AutoStepTrackerProps) {
   const {
     isTracking,
+    isSupported,
     liveSteps,
     cadence,
     distanceKm,
@@ -17,6 +18,14 @@ export default function AutoStepTracker({ initialSteps, onStepsChange }: AutoSte
     startTracking,
     stopTracking,
   } = useStepTracker(initialSteps, onStepsChange);
+
+  if (!isSupported) {
+    return (
+      <div style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.25)", padding: "16px", borderRadius: 8, color: "#f87171", fontSize: 14 }}>
+        Automatic step tracking isn't available on this device.
+      </div>
+    );
+  }
 
   return (
     <div
