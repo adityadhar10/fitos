@@ -380,7 +380,7 @@ Return a JSON object with EXACTLY this structure (omit fields that do not apply)
 Respond ONLY with valid JSON. No markdown.`;
 
     const result = await genAI.models.generateContent({
-      model: 'gemini-2.0-flash-lite',
+      model: 'gemini-3.5-flash-lite',
       contents: prompt,
     });
     
@@ -469,7 +469,7 @@ Return a JSON object with EXACTLY this structure:
 Respond ONLY with valid JSON. No markdown. No emojis.`;
 
     const result = await genAI.models.generateContent({
-      model: 'gemini-2.0-flash-lite',
+      model: 'gemini-3.5-flash-lite',
       contents: prompt,
     });
     
