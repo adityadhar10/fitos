@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, TrendingUp, Dumbbell, Target, Loader, AlertCircle } from "lucide-react";
 import { analyzeWorkout } from "../services/api";
+import { speakText, stopSpeech } from "../utils/voice";
 
 interface WorkoutExercise {
   name: string;
@@ -41,6 +42,7 @@ function calcVolume(sets: { reps: number; weight: number }[]): number {
 export default function WorkoutAnalysisModal({ session, allSessions, prs, onClose }: Props) {
   const [state, setState] = useState<"loading" | "done" | "error">("loading");
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [speaking, setSpeaking] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   // Prevent body scroll while modal is open
@@ -145,9 +147,10 @@ export default function WorkoutAnalysisModal({ session, allSessions, prs, onClos
         background: "rgba(0,0,0,0.75)",
         zIndex: 99999,
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-start",
         justifyContent: "center",
-        padding: "20px 16px",
+        padding: "32px 20px",
+        overflowY: "auto",
       }}
     >
       <div
@@ -155,8 +158,8 @@ export default function WorkoutAnalysisModal({ session, allSessions, prs, onClos
         style={{
           width: "100%",
           maxWidth: 680,
-          maxHeight: "88vh",
-          overflowY: "auto",
+          marginTop: 20,
+          marginBottom: 40,
           background: "#0f1410",
           border: "1px solid #1e2620",
           borderRadius: 16,
@@ -252,6 +255,48 @@ export default function WorkoutAnalysisModal({ session, allSessions, prs, onClos
 
           {state === "done" && result && (
             <>
+              {/* Voice Actions */}
+              {"speechSynthesis" in window && (
+                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: -4 }}>
+                  <button
+                    onClick={() => {
+                      if (speaking) {
+                        stopSpeech();
+                        setSpeaking(false);
+                      } else {
+                        const lines = [];
+                        if (result.summary) lines.push(result.summary);
+                        if (result.progression) lines.push("Progression: " + result.progression);
+                        if (result.keyObservation) lines.push("Key observation: " + result.keyObservation);
+                        const nextWorkout = result.nextWorkout ?? result.whatToDo ?? [];
+                        if (nextWorkout.length > 0) lines.push("Next workout focus: " + nextWorkout.join(". "));
+                        const whatToAvoid = result.whatToAvoid ?? [];
+                        if (whatToAvoid.length > 0) lines.push("What to avoid: " + whatToAvoid.join(". "));
+                        if (result.why) lines.push("Why this plan: " + result.why);
+                        
+                        const text = lines.join(". ");
+                        if (!text.trim()) return;
+                        
+                        setSpeaking(true);
+                        speakText(
+                          text, 
+                          () => setSpeaking(false), // onEnd
+                          () => setSpeaking(false)  // onError
+                        );
+                      }
+                    }}
+                    style={{
+                      padding: "8px 12px", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                      background: "rgba(255,255,255,0.06)", border: "1px solid #1e2620",
+                      color: speaking ? "#4ade80" : "#8a938d",
+                      borderColor: speaking ? "#4ade80" : "#1e2620"
+                    }}
+                  >
+                    {speaking ? "Stop Listening" : "Listen to Analysis"}
+                  </button>
+                </div>
+              )}
+
               {result.summary && (
                 <Section title="Performance Summary">
                   <p style={{ margin: 0, lineHeight: 1.65, fontSize: 14, color: "#d1d5db" }}>

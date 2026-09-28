@@ -267,39 +267,129 @@ export const TEMPLATES = [
   {
     icon: Dumbbell,
     name: "Push Day",
-    desc: "Chest · Shoulders · Triceps",
-    muscleGroup: "Chest, Shoulders, Triceps",
-    exercises: ["Bench Press", "Overhead Press", "Tricep Pushdown", "Lateral Raise"],
+    targetMuscles: ["Chest", "Shoulders", "Triceps"],
   },
   {
     icon: ArrowUpFromLine,
     name: "Pull Day",
-    desc: "Back · Biceps · Rear Delts",
-    muscleGroup: "Back, Biceps",
-    exercises: ["Deadlift", "Pull-up", "Barbell Row", "Bicep Curl"],
+    targetMuscles: ["Back", "Biceps", "Rear Delts"],
   },
   {
     icon: ArrowDownToLine,
     name: "Leg Day",
-    desc: "Quads · Hamstrings · Calves",
-    muscleGroup: "Legs",
-    exercises: ["Squat", "Leg Press", "Leg Curl", "Calf Raise"],
+    targetMuscles: ["Quads", "Hamstrings", "Calves"],
   },
   {
     icon: Flame,
     name: "Full Body",
-    desc: "Compound Heavy Movements",
-    muscleGroup: "Full Body",
-    exercises: ["Squat", "Bench Press", "Barbell Row", "Overhead Press"],
+    targetMuscles: ["Chest", "Back", "Shoulders", "Quads", "Hamstrings", "Biceps", "Triceps", "Calves", "Core"],
   },
 ];
 
-/* eslint-disable */
-export const getWorkoutMuscleInfo = (name: string, category?: string) => {
-  if(name){}
+export function generateWorkoutForTemplate(targetMuscles: string[]): string[] {
+  const selected: string[] = [];
+  const coveredGaps = new Set<string>();
 
+  const gaps = new Set<string>();
+  if (targetMuscles.includes("Chest")) gaps.add("Chest");
+  if (targetMuscles.includes("Shoulders")) {
+    gaps.add("Front Delts");
+    gaps.add("Lateral Delts");
+  }
+  if (targetMuscles.includes("Triceps")) gaps.add("Triceps");
+  
+  if (targetMuscles.includes("Back")) {
+    gaps.add("Vertical Pull");
+    gaps.add("Horizontal Pull");
+  }
+  if (targetMuscles.includes("Biceps")) gaps.add("Biceps");
+  if (targetMuscles.includes("Rear Delts")) gaps.add("Rear Delts");
+  
+  if (targetMuscles.includes("Quads")) gaps.add("Quads");
+  if (targetMuscles.includes("Hamstrings")) gaps.add("Hamstrings");
+  if (targetMuscles.includes("Calves")) gaps.add("Calves");
+  if (targetMuscles.includes("Glutes")) gaps.add("Glutes");
+  if (targetMuscles.includes("Core")) gaps.add("Core");
+
+  const pickExercise = (gap: string) => {
+    let matches = EXERCISES.filter(ex => !selected.includes(ex.name));
+    
+    if (gap === "Chest") matches = matches.filter(ex => ex.category === "Chest" && (ex.name.includes("Press") || ex.name.includes("Push")));
+    else if (gap === "Front Delts") matches = matches.filter(ex => ex.muscle === "Front Deltoid" && ex.name.includes("Press"));
+    else if (gap === "Lateral Delts") matches = matches.filter(ex => ex.muscle === "Lateral Deltoid");
+    else if (gap === "Triceps") matches = matches.filter(ex => ex.category === "Triceps");
+    
+    else if (gap === "Vertical Pull") matches = matches.filter(ex => ex.category === "Back" && (ex.name.includes("Pull") || ex.name.includes("Chin")));
+    else if (gap === "Horizontal Pull") matches = matches.filter(ex => ex.category === "Back" && ex.name.includes("Row"));
+    else if (gap === "Biceps") matches = matches.filter(ex => ex.category === "Biceps");
+    else if (gap === "Rear Delts") matches = matches.filter(ex => ex.muscle === "Rear Deltoid");
+    
+    else if (gap === "Quads") matches = matches.filter(ex => ex.category === "Quadriceps" && (ex.name.includes("Squat") || ex.name.includes("Press") || ex.name.includes("Lunge")));
+    else if (gap === "Hamstrings") matches = matches.filter(ex => ex.category === "Hamstrings");
+    else if (gap === "Calves") matches = matches.filter(ex => ex.category === "Calves");
+    else if (gap === "Glutes") matches = matches.filter(ex => ex.category === "Glutes");
+    else if (gap === "Core") matches = matches.filter(ex => ex.category === "Abs / Core");
+
+    if (matches.length > 0) {
+      return matches[Math.floor(Math.random() * Math.min(matches.length, 3))].name; 
+    }
+    return null;
+  };
+
+  const isFullBody = targetMuscles.length > 5;
+
+  // Extra volume for specific splits
+  if (!isFullBody) {
+    if (gaps.has("Chest")) {
+      const ex1 = pickExercise("Chest"); if (ex1) selected.push(ex1);
+      const ex2 = pickExercise("Chest"); if (ex2) selected.push(ex2);
+      coveredGaps.add("Chest");
+    }
+    if (gaps.has("Quads")) {
+      const ex1 = pickExercise("Quads"); if (ex1) selected.push(ex1);
+      const ex2 = pickExercise("Quads"); if (ex2) selected.push(ex2);
+      coveredGaps.add("Quads");
+    }
+  }
+
+  const order = [
+    "Quads", "Hamstrings", "Chest", "Vertical Pull", "Horizontal Pull", "Front Delts", 
+    "Lateral Delts", "Rear Delts", "Biceps", "Triceps", "Glutes", "Calves", "Core"
+  ];
+
+  for (const gap of order) {
+    if (gaps.has(gap) && !coveredGaps.has(gap)) {
+      let skip = false;
+      if (isFullBody) {
+         if (gap === "Front Delts" && selected.some(s => s.includes("Press") && EXERCISES.find(e => e.name === s)?.category === "Chest")) skip = true;
+         if (gap === "Glutes" && selected.some(s => s.includes("Squat") || s.includes("Deadlift"))) skip = true;
+      }
+      
+      if (!skip) {
+         const ex = pickExercise(gap);
+         if (ex) {
+             selected.push(ex);
+             coveredGaps.add(gap);
+         }
+      }
+    }
+  }
+
+  return selected;
+}
+
+export const getWorkoutMuscleInfo = (name: string, category?: string) => {
+  const found = EXERCISES.find(ex => ex.name === name);
+  if (found) {
+    return {
+      category: found.category,
+      muscle: found.muscle,
+      secondaryMuscles: found.secondaryMuscles || []
+    };
+  }
   return {
     category: category || "Other",
     muscle: category || "Mixed",
+    secondaryMuscles: []
   };
 };

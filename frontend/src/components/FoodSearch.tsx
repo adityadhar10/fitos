@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { indianFoods } from "../data/indianFoods";
+import { searchFoodFromProxy } from "../services/api";
 
 interface FoodResult {
   name: string;
@@ -70,10 +71,8 @@ export default function FoodSearch({ onSelect, onEstimateWithAI }: FoodSearchPro
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetch(
-          `/off-api/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=8&fields=product_name,brands,nutriments`
-        );
-        const data = await res.json();
+        const response = await searchFoodFromProxy(query);
+        const data = response.data;
 
         const mapped: FoodResult[] = (data.products || [])
           .filter((p: any) => p.product_name && p.nutriments?.["energy-kcal_100g"])
