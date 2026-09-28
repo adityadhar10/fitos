@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-this';
+import JWT_SECRET from '../config/jwt.js';
 
 export interface AuthRequest extends Request {
   userId?: string;
@@ -17,7 +17,18 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    if (
+      typeof decoded !== 'object' ||
+      decoded === null ||
+      !('userId' in decoded) ||
+      typeof decoded.userId !== 'string'
+    ) {
+      return res.status(401).json({ error: 'Invalid or expired token.' });
+    }
+
+    req.userId = decoded.userId;
     req.userId = decoded.userId;
     next();
   } catch (error) {

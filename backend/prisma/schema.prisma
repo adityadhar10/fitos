@@ -7,30 +7,29 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(uuid())
-  email        String        @unique
-  passwordHash String
-  name         String
-  calorieGoal  Int           @default(2400)
-  proteinGoal  Int           @default(160)
-  carbGoal     Int           @default(300)
-  fatGoal      Int           @default(82)
-  createdAt    DateTime      @default(now())
-
-  meals        Meal[]
-  workouts     Workout[]
+  id              String           @id @default(uuid())
+  email           String           @unique
+  passwordHash    String
+  name            String
+  calorieGoal     Int              @default(2400)
+  proteinGoal     Int              @default(160)
+  carbGoal        Int              @default(300)
+  fatGoal         Int              @default(82)
+  createdAt       DateTime         @default(now())
+  dailyMetrics    DailyMetric[]
+  meals           Meal[]
+  badges          UserBadge[]
+  weightLogs      WeightEntry[]
+  workouts        Workout[]
   workoutSessions WorkoutSession[]
-  weightLogs   WeightEntry[]
-  dailyMetrics DailyMetric[]
-  badges       UserBadge[]
 }
 
 model UserBadge {
   id       String   @id @default(uuid())
   userId   String
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   badgeId  String
   earnedAt DateTime @default(now())
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, badgeId])
 }
@@ -38,73 +37,72 @@ model UserBadge {
 model Meal {
   id          String   @id @default(uuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   type        String
   description String
   calories    Int
-  protein     Int      @default(0)
+  createdAt   DateTime @default(now())
   carbs       Int      @default(0)
   fats        Int      @default(0)
-  createdAt   DateTime @default(now())
+  protein     Int      @default(0)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-
 model WorkoutSession {
-  id        String    @id @default(uuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name      String
-  date      DateTime  @default(now())
-  workouts  Workout[]
+  id       String    @id @default(uuid())
+  userId   String
+  name     String
+  date     DateTime  @default(now())
+  workouts Workout[]
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Workout {
+  id               String          @id @default(uuid())
+  userId           String
+  name             String
+  date             DateTime        @default(now())
+  muscleGroup      String?
   workoutSessionId String?
+  sets             Set[]
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   workoutSession   WorkoutSession? @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String
-  muscleGroup String?
-  date        DateTime @default(now())
-  sets        Set[]
 }
 
 model Set {
   id        String  @id @default(uuid())
   workoutId String
-  workout   Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
   reps      Int
   weight    Float
+  workout   Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
 }
 
 model WeightEntry {
   id     String   @id @default(uuid())
   userId String
-  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   weight Float
   date   DateTime @default(now())
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model DailyMetric {
   id         String   @id @default(uuid())
   userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   date       DateTime @default(now())
   steps      Int      @default(0)
   sleepHours Float    @default(0)
   waterMl    Int      @default(0)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
 }
 
 model IngredientNutrition {
-  id         String   @id @default(uuid())
-  name       String   @unique
-  calories   Float
-  protein    Float
-  carbs      Float
-  fats       Float
-  source     String   @default("ai")
-  createdAt  DateTime @default(now())
+  id        String   @id @default(uuid())
+  name      String   @unique
+  calories  Float
+  protein   Float
+  carbs     Float
+  fats      Float
+  source    String   @default("ai")
+  createdAt DateTime @default(now())
 }

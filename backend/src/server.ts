@@ -12,6 +12,7 @@ import badgesRoutes from './routes/badges.js';
 import exportRoutes from './routes/export.js';
 import coachRoutes from './routes/coach.js';
 import routinesRoutes from './routes/routines.js';
+import voiceRoutes from './routes/voice.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -51,6 +52,7 @@ app.use('/api/badges', badgesRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/coach', coachRoutes);
 app.use('/api/routines', routinesRoutes);
+app.use('/api/voice', voiceRoutes);
 
 // ── Global error handler (must be LAST) ──────────────────────────────────────
 app.use(errorHandler);
